@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="General purpose website to list my projects.">
+  <meta name="author" content="Aaron Cassar">
+
+  <link rel="shortcut icon" href="{{ url_for('static',filename='fav.ico') }}">
+
+  <title>Aaron Cassar</title>
+
+  <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/modern-business.css') }}" rel="stylesheet">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="">Aaron Cassar</a>
+      <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="#about_me">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#contact_me">Contact</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownPortfolio" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Projects
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownPortfolio">
+              <a class="dropdown-item" target="_blank" href="https://wanderersguide.app/">Wanderer's Guide</a>
+              <a class="dropdown-item" target="" href="">Tales of 2e</a>
+              <a class="dropdown-item" target="" href="">WalkAshland</a>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <header>
+    <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+      <ol class="carousel-indicators">
+        <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
+        <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
+        <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+      </ol>
+      <div class="carousel-inner" role="listbox">
+        <!-- Slide One - Set the background image for this slide in the line below -->
+        <div class="carousel-item active" style="background-image: url('https://images.pexels.com/photos/1287075/pexels-photo-1287075.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940')">
+          <div class="carousel-caption d-none d-md-block">
+            <h3></h3>
+            <p></p>
+          </div>
+        </div>
+        <!-- Slide Two - Set the background image for this slide in the line below -->
+        <div class="carousel-item" style="background-image: url('https://images.pexels.com/photos/6992/forest-trees-northwestisbest-exploress.jpg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940')">
+          <div class="carousel-caption d-none d-md-block">
+            <h3></h3>
+            <p></p>
+          </div>
+        </div>
+        <!-- Slide Three - Set the background image for this slide in the line below -->
+        <div class="carousel-item" style="background-image: url('https://images.pexels.com/photos/1062249/pexels-photo-1062249.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940')">
+          <div class="carousel-caption d-none d-md-block">
+            <h3></h3>
+            <p></p>
+          </div>
+        </div>
+      </div>
+      <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+      </a>
+      <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <h1 class="my-4">Active Projects</h1>
+
+    <!-- Marketing Icons Section -->
+    <div class="row">
+
+      <div class="col-lg-4 col-sm-6 portfolio-item">
+        <div class="card h-100">
+          <div class="card-body">
+            <h4 class="card-title">
+              <a target="_blank" href="https://wanderersguide.app/">Wanderer's Guide</a>
+            </h4>
+            <p class="card-text">A semi-automated character manager for Pathfinder 2e (a TTRPG system).</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4 col-sm-6 portfolio-item">
+        <div class="card h-100">
+          <div class="card-body">
+            <h4 class="card-title">
+              <a target="" href="">Tales of 2e</a>
+            </h4>
+            <p class="card-text">A firefox and chrome extension that detects dice notation on popular Pathfinder 2e websites and generates the appropriate TaleSpire dice roll link.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4 col-sm-6 portfolio-item">
+        <div class="card h-100">
+          <div class="card-body">
+            <h4 class="card-title">
+              <a target="" href="">WalkAshland</a>
+            </h4>
+            <p class="card-text">An android app used to take virtual tours of Ashland.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /.row -->
+
+    <!-- Portfolio Section -->
+    <h2>Previous Projects</h2>
+
+    <div class="row">
+      
+      <div class="col-lg-4 col-sm-6 portfolio-item">
+        <div class="card h-100">
+          <div class="card-body">
+            <h4 class="card-title">
+              <a target="_blank" href="https://www.spigotmc.org/resources/%E2%97%80-innovative-mechanics-%E2%96%B6-tech-mods-in-spigot-ic2-iron-chests.50654/">Innovative Mechanics</a>
+            </h4>
+            <p class="card-text">A Spigot plugin for Minecraft that allowed server owners to essentially have a tech mod on their server without players needing to install anything.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4 col-sm-6 portfolio-item">
+        <div class="card h-100">
+          <div class="card-body">
+            <h4 class="card-title">
+              <a target="" href="">Dominions</a>
+            </h4>
+            <p class="card-text">A kingdom creator and manager Spigot plugin for Minecraft server owners.</p>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    <!-- /.row -->
+
+    <!-- Features Section -->
+    <div id="about_me" class="row">
+      <div class="col-lg-6">
+        <h2>About Me</h2>
+        <p>I'm a software developer who's passionate about nature, creating, TTRPGs, AI, and terrain generation.</p>
+        <br>
+        <strong>Language Experience</strong><em> (as of 2021)</em>
+        <ul>
+          <li>Java <em>(4 years)</em></li>
+          <li>JavaScript <em>(3 years)</em></li>
+          <li>Python <em>(2 years)</em></li>
+          <li>MySQL <em>(2 years)</em></li>
+          <li>C++ <em>(1 year)</em></li>
+          <li>Rust <em>(0.5 years)</em></li>
+        </ul>
+        <br>
+        <strong>Tools Experience</strong><em> (as of 2021)</em>
+        <ul>
+          <li>NodeJS / Express <em>(3 years)</em></li>
+          <li>Bulma <em>(2 years)</em></li>
+          <li>DigitalOcean <em>(2 years)</em></li>
+          <li>jQuery <em>(2 years)</em></li>
+          <li>Sequalize <em>(2 years)</em></li>
+          <li>Socket.io <em>(2 years)</em></li>
+          <li>AWS <em>(1 year)</em></li>
+          <li>Flask <em>(1 year)</em></li>
+          <li>Google Cloud <em>(1 year)</em></li>
+          <li>Prisma <em>(1 year)</em></li>
+        </ul>
+
+        <p>I also have tinkered with numerous other tools and frameworks.</p>
+      </div>
+    </div>
+    <!-- /.row -->
+
+    <hr>
+
+    <!-- Call to Action Section -->
+    <div id="contact_me" class="row mb-4">
+      <div class="col-md-5">
+        <p>If you have any questions, you can contact me at:</p>
+      </div>
+      <div class="col-md-4">
+        <a class="btn btn-lg btn-secondary btn-block" href="mailto:aaronncassar@gmail.com">aaronncassar@gmail.com</a>
+      </div>
+    </div>
+
+  </div>
+  <!-- /.container -->
+
+  <!-- Footer -->
+  <footer class="py-5 bg-dark">
+    <div class="container">
+      <p class="m-0 text-center text-white">Copyright &copy; Aaron Cassar 2021</p>
+    </div>
+    <!-- /.container -->
+  </footer>
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+</body>
+
+</html>
