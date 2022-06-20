@@ -69,14 +69,14 @@ $("document")
     makeDotActive("resumetext");
     $("#svgtitle")
       .show();
-    preloadImage("images/background.jpeg");
+    preloadImage("images/background.webp");
     $("#aandb")
       .attr("src", "images/aandb.png");
     $(".headshot")
       .attr("src", "images/headshot.webp");
     setTimeout(function () {
       $("#dyno")
-        .css("background-image", "url(images/background.jpeg)");
+        .css("background-image", "url(images/background.webp)");
     }, 600);
     $("#introtext")
       .click(function () {
@@ -119,7 +119,7 @@ $("document")
           .addClass("fading");
         setTimeout(function () {
           $("#dyno")
-            .css("background-image", "url(images/background.jpeg)");
+            .css("background-image", "url(images/background.webp)");
         }, 50);
         makeDotActive("resumetext");
       });

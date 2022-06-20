@@ -200,6 +200,11 @@ body {
     border-radius: 4.5em;
 }
 
+.intro-about-btn {
+    margin-top: 2em!important;
+    margin-bottom: 2em!important;
+}
+
 .section-center a {
     color: #7f7fbf;
     text-decoration: none;
