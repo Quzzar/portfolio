@@ -32,12 +32,12 @@ function animateSVG(elementID) {
   path.style.strokeDashoffset = '0';
 }
 
-$('.scroll_item').on('click', function() {
+$('.scroll_item').on('click', function () {
   var elem = $('#' + $(this).data('page')).click();
 });
 
 var div = document.getElementById('fadetitle'),
-    letters = div.textContent.split('');
+  letters = div.textContent.split('');
 
 while (div.hasChildNodes()) div.removeChild(div.firstChild);
 for (var i = 0; i < letters.length; i++) {
@@ -49,7 +49,7 @@ for (var i = 0; i < letters.length; i++) {
   letter.style.opacity = 0;
   div.appendChild(letter);
 }
-setTimeout(function() {
+setTimeout(function () {
   for (var i = 0; i < div.childNodes.length; i++) {
     div.childNodes[i].style.opacity = 1;
   }
@@ -65,7 +65,7 @@ function preloadImage(e) {
 }
 
 $("document")
-  .ready(function() {
+  .ready(function () {
     makeDotActive("resumetext");
     $("#svgtitle")
       .show();
@@ -74,19 +74,19 @@ $("document")
       .attr("src", "images/aandb.png");
     $(".headshot")
       .attr("src", "images/headshot.webp");
-    setTimeout(function() {
+    setTimeout(function () {
       $("#dyno")
         .css("background-image", "url(images/background.jpeg)");
     }, 600);
     $("#introtext")
-      .click(function() {
+      .click(function () {
         animateSVG("body");
         hideInnerBG();
         swap("#about");
         makeDotActive("introtext");
       });
     $("#abouttext")
-      .click(function() {
+      .click(function () {
         animateSVG("hammer");
         animateSVG("case");
         hideInnerBG();
@@ -94,7 +94,7 @@ $("document")
         makeDotActive("abouttext");
       });
     $("#experiencetext")
-      .click(function() {
+      .click(function () {
         animateSVG("mouse");
         animateSVG("computer");
         hideInnerBG();
@@ -102,13 +102,13 @@ $("document")
         makeDotActive("experiencetext");
       });
     $("#projectstext")
-      .click(function() {
+      .click(function () {
         hideInnerBG();
         swap("#resume");
         makeDotActive("projectstext");
       });
     $("#resumetext")
-      .click(function() {
+      .click(function () {
         retractSVG("mouse");
         retractSVG("computer");
         retractSVG("hammer");
@@ -117,7 +117,7 @@ $("document")
         swap("#intro");
         $("#dyno")
           .addClass("fading");
-        setTimeout(function() {
+        setTimeout(function () {
           $("#dyno")
             .css("background-image", "url(images/background.jpeg)");
         }, 50);
@@ -143,13 +143,13 @@ function hideInnerBG() {
 
 function swap(e) {
   $(".inner-body section:not(" + e + ")")
-    .each(function() {
+    .each(function () {
       $(this)
         .fadeOut(250);
     });
   $(".inner-body section:not(" + e + ")")
     .promise()
-    .done(function() {
+    .done(function () {
       $("#dyno")
         .scrollTop(0);
       $(e)
