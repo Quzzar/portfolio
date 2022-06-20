@@ -72,8 +72,8 @@ $("document")
     preloadImage("images/background.jpeg");
     $("#aandb")
       .attr("src", "images/aandb.png");
-    $("#introhead")
-      .attr("src", "images/headshot.png");
+    $(".headshot")
+      .attr("src", "images/headshot.webp");
     setTimeout(function() {
       $("#dyno")
         .css("background-image", "url(images/background.jpeg)");
