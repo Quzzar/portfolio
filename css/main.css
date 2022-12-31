@@ -70,6 +70,7 @@ body {
 
 .section-center .photo-container {
     display: inline-block;
+    object-fit: scale-down;
     margin: 15px;
     vertical-align: bottom;
     width: 40%;
@@ -79,11 +80,13 @@ body {
 .section-center .standalone-image {
     margin-top: 1em;
     width: 30%;
+    border-radius: 0.5em;
 }
 
 .section-center .text-cutoff {
-    width: 65%;
-    margin-left: 17.5%;
+    width: 55%;
+    font-size: 0.8em;
+    margin-left: 22.5%;
 }
 
 .section-center .projects-div {
@@ -126,6 +129,10 @@ body {
     display: inline-block;
 }
 
+.project-img {
+  max-width: clamp(50px, 8vw, 200px);
+}
+
 @media(max-width: 850px) {
     .dots-div {
         display: none;
@@ -139,6 +146,7 @@ body {
     .section-center .standalone-image {
         margin-top: 30px;
         width: 90%;
+        border-radius: 0.5em;
     }
 
     .section-center .photo-container {
@@ -177,6 +185,7 @@ body {
 
 .section-center .experience-photo-large {
     height: 5em;
+    object-fit: scale-down;
     max-width: 90%;
     margin: 5px;
     display: inline-block;
@@ -185,7 +194,7 @@ body {
 
 .section-center .experience-photo-small {
     height: 4em;
-    max-width: 80%;
+    max-width: 60%;
     margin: 5px;
     display: inline-block;
     border-radius: 0.5em;
@@ -202,6 +211,11 @@ body {
 .headshot.larger {
     height: 11em;
     border-radius: 5.5em;
+}
+
+.painting {
+  height: 11em;
+  border-radius: 0.5em;
 }
 
 .intro-about-container {

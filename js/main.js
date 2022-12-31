@@ -74,6 +74,8 @@ $("document")
       .attr("src", "images/aandb.png");
     $(".headshot")
       .attr("src", "images/headshot.webp");
+    $(".painting")
+      .attr("src", "images/recreation-of-childhood-painting.png");
     setTimeout(function () {
       $("#dyno")
         .css("background-image", "url(images/background.webp)");
@@ -88,10 +90,16 @@ $("document")
     $("#abouttext")
       .click(function () {
         animateSVG("hammer");
+        hideInnerBG();
+        swap("#about-background");
+        makeDotActive("abouttext");
+      });
+    $("#aboutmoretext")
+      .click(function () {
         animateSVG("case");
         hideInnerBG();
         swap("#experience");
-        makeDotActive("abouttext");
+        makeDotActive("aboutmoretext");
       });
     $("#experiencetext")
       .click(function () {
