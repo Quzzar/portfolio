@@ -71,7 +71,7 @@ $("document")
       .show();
     preloadImage("images/background.webp");
     $("#aandb")
-      .attr("src", "images/aandb.png");
+      .attr("src", "images/headshot.webp");
     $(".headshot")
       .attr("src", "images/headshot.webp");
     $(".painting")
