@@ -211,10 +211,24 @@ body {
 .headshot.larger, .headshot-pixel.larger {
     height: 11em;
     border-radius: 5.5em;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    /* Add alpha channel to hex color (browser support: https://caniuse.com/css-rrggbbaa) */
-    background-color: #ffffff40;
+}
+
+.headshot-blur-bg {
+  /* Add alpha channel to hex color (browser support: https://caniuse.com/css-rrggbbaa) */
+  background-color: #ffffff40;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  height: 11em;
+  width: 11em;
+  border-radius: 5.5em;
+  overflow: hidden;
+}
+
+.centered-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
 }
 
 .black-n-white {
