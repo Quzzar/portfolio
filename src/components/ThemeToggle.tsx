@@ -10,8 +10,8 @@ import { useAtom } from "jotai";
 import { motion, useReducedMotion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { themeAtom } from "../atoms/theme";
-import { paintBrush } from "../lib/paint-brush";
-import { DARK_PALETTE, LIGHT_PALETTE, tokens } from "../styles/theme.css";
+import { brushMask, createBrushStrokes } from "../lib/paint-brush";
+import { tokens } from "../styles/theme.css";
 import * as styles from "../styles/home.css";
 
 export type ThemeToggleHandle = { toggle: () => void };
@@ -22,85 +22,73 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
     const [theme, setTheme] = useAtom(themeAtom);
     const shouldReduceMotion = useReducedMotion();
     const [isChanging, setIsChanging] = useState(false);
-    const [error, setError] = useState("");
-    const canvasRef = useRef<HTMLCanvasElement>(null);
     const frame = useRef(0);
     const isRunning = useRef(false);
+    const transitionRef = useRef<ViewTransition | null>(null);
 
-    useEffect(() => () => cancelAnimationFrame(frame.current), []);
+    useEffect(
+      () => () => {
+        cancelAnimationFrame(frame.current);
+        transitionRef.current?.skipTransition();
+        document.documentElement.style.removeProperty("--theme-brush-mask");
+      },
+      [],
+    );
 
-    function toggle(): void {
+    async function toggle(): Promise<void> {
       if (isRunning.current) return;
       const next = theme === "light" ? "dark" : "light";
-      if (shouldReduceMotion) {
+      if (shouldReduceMotion || !document.startViewTransition) {
         setTheme(next);
         return;
       }
-      const canvas = canvasRef.current;
-      const context = canvas?.getContext("2d");
-      if (!canvas || !context) {
-        console.error("Theme brush could not initialize its canvas.");
-        setError("The theme transition could not start.");
-        return;
-      }
-      setError("");
       isRunning.current = true;
       setIsChanging(true);
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      const ratio = Math.min(window.devicePixelRatio, 2);
-      canvas.width = width * ratio;
-      canvas.height = height * ratio;
-      canvas.style.opacity = "1";
-      context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      const pigment =
-        next === "light" ? LIGHT_PALETTE.paper : DARK_PALETTE.paper;
-      const started = performance.now();
-      let hasCommitted = false;
-
-      function draw(now: number): void {
-        if (!canvas || !context) return;
-        const elapsed = now - started;
-        const progress = Math.min(1, elapsed / tokens.motion.brush);
-        // A restrained acceleration/deceleration makes the stroke feel hand-driven.
-        const eased = progress * progress * (3 - 2 * progress);
-        paintBrush(context, width, height, eased, pigment);
-        if (progress === 1 && !hasCommitted) {
-          hasCommitted = true;
-          flushSync(() => setTheme(next));
-        }
-        if (hasCommitted) {
-          canvas.style.opacity = String(
-            Math.max(
-              0,
-              1 - (elapsed - tokens.motion.brush) / tokens.motion.brushReveal,
-            ),
+      const root = document.documentElement;
+      const painting = createBrushStrokes(
+        window.innerWidth,
+        window.innerHeight,
+      );
+      root.style.setProperty("--theme-brush-mask", brushMask(painting, 0));
+      const transition = document.startViewTransition(() => {
+        flushSync(() => setTheme(next));
+      });
+      transitionRef.current = transition;
+      try {
+        await transition.ready;
+        const started = performance.now();
+        function draw(now: number): void {
+          const progress = Math.min(1, (now - started) / tokens.motion.brush);
+          root.style.setProperty(
+            "--theme-brush-mask",
+            brushMask(painting, progress),
           );
+          if (progress < 1) frame.current = requestAnimationFrame(draw);
+          else transition.skipTransition();
         }
-        if (elapsed < tokens.motion.brush + tokens.motion.brushReveal)
-          frame.current = requestAnimationFrame(draw);
-        else {
-          context.clearRect(0, 0, width, height);
-          isRunning.current = false;
-          setIsChanging(false);
-        }
+        frame.current = requestAnimationFrame(draw);
+        await transition.finished;
+      } catch (error) {
+        // Hidden documents can skip snapshot capture; the theme update still completes.
+        console.info("Theme painting skipped by the browser.", error);
+        transition.skipTransition();
+      } finally {
+        cancelAnimationFrame(frame.current);
+        root.style.removeProperty("--theme-brush-mask");
+        transitionRef.current = null;
+        isRunning.current = false;
+        setIsChanging(false);
       }
-      frame.current = requestAnimationFrame(draw);
     }
 
     useImperativeHandle(ref, () => ({ toggle }));
 
     return (
       <>
-        <canvas
-          ref={canvasRef}
-          className={styles.themeBrush}
-          hidden={!isChanging}
-          aria-hidden="true"
-        />
         <button
           className={styles.themeButton}
           disabled={isChanging}
+          data-painting={isChanging}
           aria-label={theme === "light" ? "Use dark theme" : "Use light theme"}
           onClick={toggle}
         >
@@ -123,11 +111,6 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
             )}
           </motion.span>
         </button>
-        {error && (
-          <span role="alert" className={styles.screenReader}>
-            {error}
-          </span>
-        )}
       </>
     );
   },

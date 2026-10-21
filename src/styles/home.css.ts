@@ -232,15 +232,6 @@ export const themeIcon = style({
   alignItems: "center",
   justifyContent: "center",
 });
-export const themeBrush = style({
-  position: "fixed",
-  inset: 0,
-  width: "100%",
-  height: "100%",
-  zIndex: 100,
-  pointerEvents: "auto",
-  selectors: { "&[hidden]": { display: "none" } },
-});
 export const screenReader = style({
   position: "absolute",
   width: "1px",

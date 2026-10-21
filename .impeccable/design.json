@@ -205,8 +205,8 @@
       },
       {
         "name": "theme-brush",
-        "value": "680ms stroke / 180ms reveal",
-        "purpose": "One opaque brush stroke and animated icon; immediate with reduced motion."
+        "value": "1250ms overlapping brush strokes",
+        "purpose": "Six randomized bristled strokes mask the complete destination view, including text and controls; no final UI fade. Immediate with reduced motion or without view-transition support."
       }
     ],
     "breakpoints": [
