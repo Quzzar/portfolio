@@ -65,9 +65,7 @@ export function Home() {
     >
       {isPlaying && <AsciiField onClose={closePlay} />}
       <div className={styles.homeContent} hidden={isPlaying}>
-        <main
-          className={`${styles.main} ${hasOutput ? styles.expandedMain : ""}`}
-        >
+        <main className={styles.main}>
           <header>
             <p className={styles.directory}>~/aaron</p>
             <h1 className={styles.name}>Aaron Cassar</h1>

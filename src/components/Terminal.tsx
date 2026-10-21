@@ -8,10 +8,12 @@ import {
 import { Terminal as Xterm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
-import { LocalEchoAddon } from "@gytx/xterm-local-echo";
+import { Readline } from "xterm-readline";
+import { completeToken } from "../lib/terminal-completion";
+import type { Completion } from "../lib/terminal-completion";
 import { useAtomValue } from "jotai";
 import { themeAtom } from "../atoms/theme";
-import { COMMANDS, resolveCommand } from "../lib/commands";
+import { resolveCommand } from "../lib/commands";
 import { terminalResponse } from "../lib/terminal-responses";
 import { DARK_PALETTE, LIGHT_PALETTE, tokens } from "../styles/theme.css";
 import * as styles from "../styles/home.css";
@@ -31,7 +33,6 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
     const host = useRef<HTMLDivElement>(null);
     const terminal = useRef<Xterm | null>(null);
     const callbacks = useRef(props);
-    const [expanded, setExpanded] = useState(false);
     const [error, setError] = useState("");
     const theme = useAtomValue(themeAtom);
     const palette = theme === "light" ? LIGHT_PALETTE : DARK_PALETTE;
@@ -59,10 +60,7 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
         allowProposedApi: false,
       });
       terminal.current = term;
-      const echo = new LocalEchoAddon({
-        historySize: 100,
-        enableIncompleteInput: false,
-      });
+      const echo = new Readline();
       const fit = new FitAddon();
       term.loadAddon(fit);
       term.loadAddon(new WebLinksAddon());
@@ -70,95 +68,171 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
       term.open(element);
       term.textarea?.setAttribute("aria-label", "Terminal input");
       term.textarea?.setAttribute("aria-describedby", "terminal-hint");
-      echo.addAutocompleteHandler((index: number, words: string[]) => {
-        if (index === 0)
-          return [...COMMANDS, "cat", "whoami", "projects", "email", "./play"];
-        if (words[0] === "cat") return ["about.txt", "work.txt", "contact.txt"];
-        if (words[0] === "ls") return ["-a", "-la"];
-        return [];
-      });
-      let highestRow = 0;
-      const expand = (value: boolean) => {
-        setExpanded(value);
-        callbacks.current.onExpanded(value);
+      const expand = (value: boolean) => callbacks.current.onExpanded(value);
+      let completion: Completion | null = null;
+      let generation = 0;
+      let completing = Promise.resolve();
+      const resetCompletion = () => {
+        completion = null;
+        generation++;
       };
+      const data = term.onData(resetCompletion);
+      async function complete(direction: number): Promise<void> {
+        const revision = generation;
+        await echo.whenReady();
+        if (disposed || revision !== generation) return;
+        if (completion) {
+          completion.index =
+            (completion.index + direction + completion.choices.length) %
+            completion.choices.length;
+          const choice = completion.choices[completion.index] ?? "";
+          const value = completion.before + choice;
+          echo.updateLine(value + completion.after, value.length);
+          return;
+        }
+        const next = completeToken(echo.getLine(), echo.getCursor());
+        if (!next) return;
+        if (next.choices.length === 1) {
+          const value =
+            next.before + next.common + (next.after.startsWith(" ") ? "" : " ");
+          echo.updateLine(value + next.after, value.length);
+        } else {
+          completion = next;
+          const value = next.before + next.common;
+          echo.updateLine(value + next.after, value.length);
+          await echo.showCompletions(next.choices);
+        }
+      }
       term.attachCustomKeyEventHandler((event) => {
         if (event.type !== "keydown") return true;
+        if (
+          [
+            "ArrowUp",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowRight",
+            "Home",
+            "End",
+            "PageUp",
+            "PageDown",
+            "Backspace",
+          ].includes(event.key)
+        )
+          event.preventDefault();
         if (event.key === "Escape") {
+          resetCompletion();
           term.blur();
           return false;
         }
-        if (event.key === "Tab" && event.shiftKey) {
-          term.blur();
-          return false;
-        }
-        if (event.ctrlKey && event.key.toLowerCase() === "a") {
+        if (event.key === "Tab") {
+          if (event.shiftKey && !completion) {
+            term.blur();
+            return false;
+          }
           event.preventDefault();
-          term.input("\x1b[H", true);
+          const revision = generation;
+          completing = completing
+            .then(() => {
+              if (generation !== revision || disposed) return;
+              return complete(event.shiftKey ? -1 : 1);
+            })
+            .catch((reason: unknown) => {
+              console.error("Terminal completion failed.", reason);
+              setError("Completion could not finish. Try typing the command.");
+            });
           return false;
         }
-        if (event.ctrlKey && event.key.toLowerCase() === "e") {
+        if (event.metaKey && event.key.toLowerCase() === "a") {
           event.preventDefault();
-          term.input("\x1b[F", true);
+          term.selectAll();
           return false;
         }
-        if (event.ctrlKey && event.key.toLowerCase() === "l") {
+        if (
+          (event.altKey || event.metaKey) &&
+          (event.key === "ArrowLeft" || event.key === "ArrowRight")
+        ) {
           event.preventDefault();
-          echo.abortRead("clear");
-          term.reset();
-          expand(false);
+          resetCompletion();
+          const line = echo.getLine();
+          const cursor = echo.getCursor();
+          const next = event.metaKey
+            ? event.key === "ArrowLeft"
+              ? 0
+              : line.length
+            : event.key === "ArrowLeft"
+              ? line.slice(0, cursor).replace(/\S+\s*$/, "").length
+              : cursor + (line.slice(cursor).match(/^\s*\S+/)?.[0].length ?? 0);
+          echo.updateLine(line, next);
           return false;
         }
-        if (event.key === "Tab") expand(true);
+        if (
+          event.ctrlKey &&
+          ["b", "f", "p", "n"].includes(event.key.toLowerCase())
+        ) {
+          event.preventDefault();
+          resetCompletion();
+          const sequence: Record<string, string> = {
+            b: "\x1b[D",
+            f: "\x1b[C",
+            p: "\x1b[A",
+            n: "\x1b[B",
+          };
+          term.input(sequence[event.key.toLowerCase()] ?? "", true);
+          return false;
+        }
+        if (
+          (event.ctrlKey && event.key.toLowerCase() === "w") ||
+          (event.altKey && event.key === "Backspace")
+        ) {
+          event.preventDefault();
+          resetCompletion();
+          const line = echo.getLine();
+          const cursor = echo.getCursor();
+          const cut = line.slice(0, cursor).replace(/\S+\s*$/, "").length;
+          echo.updateLine(line.slice(0, cut) + line.slice(cursor), cut);
+          return false;
+        }
+        if (
+          event.key !== "Shift" &&
+          event.key !== "Control" &&
+          event.key !== "Alt" &&
+          event.key !== "Meta"
+        )
+          resetCompletion();
         return true;
       });
       const resize = () => {
         if (!element.clientWidth || !element.clientHeight) return;
-        term.options.fontSize = window.innerWidth <= 520 ? 15 : 18;
-        fit.fit();
+        const fontSize = window.innerWidth <= 520 ? 15 : 18;
+        if (term.options.fontSize !== fontSize)
+          term.options.fontSize = fontSize;
+        const size = fit.proposeDimensions();
+        if (size && (size.cols !== term.cols || size.rows !== term.rows))
+          term.resize(size.cols, size.rows);
       };
-      const written = term.onWriteParsed(() => {
-        highestRow = Math.max(
-          highestRow,
-          term.buffer.active.baseY + term.buffer.active.cursorY,
-        );
-        const rowHeight =
-          (element.querySelector(".xterm-screen")?.clientHeight ?? 0) /
-          term.rows;
-        if (!rowHeight) return;
-        const height = Math.ceil(
-          Math.min(
-            Math.max(2, highestRow + 2) * rowHeight,
-            Math.min(520, window.innerHeight * 0.5),
-          ),
-        );
-        if (element.style.height !== `${height}px`)
-          element.style.height = `${height}px`;
-      });
       const observer = new ResizeObserver(resize);
       observer.observe(element);
       async function read(): Promise<void> {
         while (!disposed) {
           try {
             const command = await echo.read(PROMPT);
+            resetCompletion();
             if (disposed) return;
             if (!command.trim()) continue;
             const result = resolveCommand(command);
             if (result.kind === "clear" || result.kind === "exit") {
               term.reset();
-              highestRow = 0;
               expand(false);
             } else if (result.kind === "theme") callbacks.current.onTheme();
             else if (result.kind === "play") callbacks.current.onPlay();
             else if (result.kind === "content") {
               expand(true);
-              await echo.println("");
-              await echo.println(terminalResponse(result.view, result.message));
-              await echo.println("");
+              echo.println("");
+              echo.println(terminalResponse(result.view, result.message));
+              echo.println("");
             }
           } catch (reason) {
             if (disposed) return;
-            if (reason === "clear" || reason === "aborted") continue;
             console.error("Terminal session stopped.", reason);
             setError(
               "The terminal session stopped. Reload to start a new session.",
@@ -176,8 +250,7 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
       return () => {
         disposed = true;
         observer.disconnect();
-        written.dispose();
-        echo.abortRead("disposed");
+        data.dispose();
         term.dispose();
         terminal.current = null;
       };
@@ -196,11 +269,7 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
 
     return (
       <section className={styles.terminal} aria-label="Interactive terminal">
-        <div
-          ref={host}
-          className={styles.terminalEmulator}
-          data-expanded={expanded}
-        />
+        <div ref={host} className={styles.terminalEmulator} />
         <p id="terminal-hint" className={styles.hint}>
           try “help” · Tab completes · Esc leaves the terminal
         </p>
