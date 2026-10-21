@@ -160,7 +160,7 @@ The stable accessible identity is “Founder, engineer, designer.” Changing vi
 
 ### Footer utilities and theme control
 
-Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. Social links are understated text with small external-link arrows. Hover adds ink and an underline; keyboard focus uses the shared outline. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and reveals the complete destination theme through randomly ordered short brush daubs over 1600ms. Native view snapshots preserve the whole interface: every stroke exposes the destination text, controls, and background together. Individual patches have varying angles, curved bristles, and ragged tips; they cover fractions of the page and overlap into complete coverage. There is no final UI fade. The icon rotates and settles. The terminal theme command uses the same transition. Reduced motion switches immediately.
+Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. Social links are understated text with small external-link arrows. Hover and keyboard focus draw an underline from left to right over 280ms, and external-link arrows move slightly outward. Keyboard focus retains the shared outline. Terminal URL hover draws the same underline without animating command output. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and reveals the complete destination theme through randomly ordered short brush daubs over 1600ms. Native view snapshots preserve the whole interface: every stroke exposes the destination text, controls, and background together. The mask stamps downloaded CC0 scanned watercolor PNGs by Dino0040 (see public/brushes/README.md), with random paths and rotations. A dry brush creates broken trails and a loaded brush overlaps the remaining gaps. There is no final UI fade. The icon rotates and settles. The terminal theme command uses the same transition. Reduced motion switches immediately.
 
 ### Hidden ASCII field
 
@@ -187,3 +187,5 @@ Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. So
 ### Terminal workspace
 
 The main column is centered and up to 56rem wide. The page occupies `100dvh`, with a top inset of `clamp(1.5rem, 4dvh, 3rem)`. The terminal fills remaining space between the header and footer with no fixed minimum height; output scrolls inside it. Typing and output do not change page geometry. Help lists command names only. Other responses contain factual text, file names, or links without greetings, encouragement, or interaction instructions.
+
+Link underlines draw on hover and keyboard focus, including URLs inside xterm. External-link arrows move slightly outward, and the theme control turns on hover and presses inward on click. Reduced motion keeps immediate underlines and removes spatial hover movement. Command output remains immediate.

@@ -1,4 +1,4 @@
-import { globalStyle, style } from "@vanilla-extract/css";
+import { globalStyle, keyframes, style } from "@vanilla-extract/css";
 import { color, tokens } from "./theme.css";
 
 export const page = style({
@@ -79,24 +79,54 @@ export const homeContent = style({
   flexDirection: "column",
   selectors: { "&[hidden]": { display: "none" } },
 });
-export const textButton = style({
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "0.3rem 0",
-  minHeight: "2.75rem",
-  border: 0,
-  background: "transparent",
-  textAlign: "left",
-  textDecoration: "none",
-  color: color.secondary,
+const interaction = `${tokens.motion.hover}s cubic-bezier(${tokens.motion.ease.join(",")})`;
+
+export const drawnUnderline = style({
+  position: "relative",
   selectors: {
-    "&:hover": {
-      color: color.ink,
-      textDecoration: "underline",
-      textUnderlineOffset: "0.3em",
+    "&::after": {
+      content: '""',
+      position: "absolute",
+      insetInline: 0,
+      bottom: "0.4em",
+      height: "1px",
+      background: "currentColor",
+      transform: "scaleX(0)",
+      transformOrigin: "right",
+      transition: `transform ${interaction}`,
+    },
+    "&:is(:hover, :focus-visible)::after": {
+      transform: "scaleX(1)",
+      transformOrigin: "left",
+    },
+  },
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      selectors: { "&::after": { transition: "none" } },
     },
   },
 });
+
+export const textButton = style([
+  drawnUnderline,
+  {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "0.3rem 0",
+    minHeight: "2.75rem",
+    border: 0,
+    background: "transparent",
+    textAlign: "left",
+    textDecoration: "none",
+    color: color.secondary,
+    selectors: {
+      "&:hover": {
+        color: color.ink,
+      },
+    },
+    transition: `color ${interaction}`,
+  },
+]);
 export const terminal = style({
   marginTop: "clamp(1.5rem, 4dvh, 2.5rem)",
   display: "flex",
@@ -126,17 +156,49 @@ export const social = style({
   gap: "1.8rem",
   "@media": { "(max-width: 520px)": { gap: "1rem" } },
 });
-export const socialLink = style({
-  textDecoration: "none",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "0.35rem",
-  minHeight: "2.75rem",
-  selectors: { "&:hover": { color: color.ink, textDecoration: "underline" } },
+export const socialLink = style([
+  drawnUnderline,
+  {
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.35rem",
+    minHeight: "2.75rem",
+    transition: `color ${interaction}`,
+    selectors: { "&:is(:hover, :focus-visible)": { color: color.ink } },
+  },
+]);
+globalStyle(`${socialLink} svg`, {
+  transition: `transform ${interaction}`,
+});
+globalStyle(`${socialLink}:is(:hover, :focus-visible) svg`, {
+  transform: "translate(0.12em, -0.12em)",
+  "@media": { "(prefers-reduced-motion: reduce)": { transform: "none" } },
 });
 export const themeButton = style([
   textButton,
-  { justifyContent: "center", minWidth: "2.75rem", flexShrink: 0, padding: 0 },
+  {
+    justifyContent: "center",
+    minWidth: "2.75rem",
+    flexShrink: 0,
+    padding: 0,
+    transition: `transform ${interaction}, color ${interaction}`,
+    selectors: {
+      "&::after": { display: "none" },
+      "&:hover:not(:disabled)": { transform: "rotate(-12deg) scale(1.08)" },
+      "&:active:not(:disabled)": { transform: "scale(0.92)" },
+    },
+    "@media": {
+      "(prefers-reduced-motion: reduce)": {
+        transition: "none",
+        selectors: {
+          "&:hover:not(:disabled), &:active:not(:disabled)": {
+            transform: "none",
+          },
+        },
+      },
+    },
+  },
 ]);
 export const themeIcon = style({
   display: "inline-flex",
@@ -188,3 +250,25 @@ export const terminalEmulator = style({
 });
 globalStyle(`${terminalEmulator} .xterm`, { padding: 0 });
 globalStyle(`${terminalEmulator} .xterm-viewport`, { scrollbarWidth: "thin" });
+
+// xterm marks hovered URLs inline; animate that underline without changing its cells.
+const terminalLink = `${terminalEmulator} .xterm-rows span[style*="text-decoration: underline"]`;
+const drawLine = keyframes({
+  from: { transform: "scaleX(0)" },
+  to: { transform: "scaleX(1)" },
+});
+globalStyle(terminalLink, {
+  position: "relative",
+  textDecoration: "none !important",
+});
+globalStyle(`${terminalLink}::after`, {
+  content: '""',
+  position: "absolute",
+  insetInline: 0,
+  bottom: "0.15em",
+  height: "1px",
+  background: "currentColor",
+  transformOrigin: "left",
+  animation: `${drawLine} ${interaction} both`,
+  "@media": { "(prefers-reduced-motion: reduce)": { animation: "none" } },
+});

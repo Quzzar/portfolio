@@ -10,7 +10,7 @@ import { useAtom } from "jotai";
 import { motion, useReducedMotion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { themeAtom } from "../atoms/theme";
-import { brushMask, createBrushStrokes } from "../lib/paint-brush";
+import { createBrushPainting } from "../lib/paint-brush";
 import { tokens } from "../styles/theme.css";
 import * as styles from "../styles/home.css";
 
@@ -22,6 +22,7 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
     const [theme, setTheme] = useAtom(themeAtom);
     const shouldReduceMotion = useReducedMotion();
     const [isChanging, setIsChanging] = useState(false);
+    const [hasBrushError, setHasBrushError] = useState(false);
     const frame = useRef(0);
     const isRunning = useRef(false);
     const transitionRef = useRef<ViewTransition | null>(null);
@@ -45,33 +46,31 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
       isRunning.current = true;
       setIsChanging(true);
       const root = document.documentElement;
-      const painting = createBrushStrokes(
-        window.innerWidth,
-        window.innerHeight,
-      );
-      root.style.setProperty("--theme-brush-mask", brushMask(painting, 0));
-      const transition = document.startViewTransition(() => {
-        flushSync(() => setTheme(next));
-      });
-      transitionRef.current = transition;
+      setHasBrushError(false);
       try {
+        const paint = await createBrushPainting(
+          window.innerWidth,
+          window.innerHeight,
+        );
+        root.style.setProperty("--theme-brush-mask", paint(0));
+        const transition = document.startViewTransition(() => {
+          flushSync(() => setTheme(next));
+        });
+        transitionRef.current = transition;
         await transition.ready;
         const started = performance.now();
         function draw(now: number): void {
           const progress = Math.min(1, (now - started) / tokens.motion.brush);
-          root.style.setProperty(
-            "--theme-brush-mask",
-            brushMask(painting, progress),
-          );
+          root.style.setProperty("--theme-brush-mask", paint(progress));
           if (progress < 1) frame.current = requestAnimationFrame(draw);
           else transition.skipTransition();
         }
         frame.current = requestAnimationFrame(draw);
         await transition.finished;
       } catch (error) {
-        // Hidden documents can skip snapshot capture; the theme update still completes.
-        console.info("Theme painting skipped by the browser.", error);
-        transition.skipTransition();
+        console.error("Theme painting failed.", error);
+        if (!transitionRef.current) setHasBrushError(true);
+        transitionRef.current?.skipTransition();
       } finally {
         cancelAnimationFrame(frame.current);
         root.style.removeProperty("--theme-brush-mask");
@@ -85,6 +84,9 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
 
     return (
       <>
+        {hasBrushError && (
+          <span role="alert">Brush could not load. Try again.</span>
+        )}
         <button
           className={styles.themeButton}
           disabled={isChanging}

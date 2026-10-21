@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { brushMask, createBrushStrokes } from "../src/lib/paint-brush";
 
 const screen = (page: Page) => page.locator(".xterm-rows");
 const currentLine = (page: Page) =>
@@ -155,7 +154,7 @@ test("paint slathers partial patches over the complete opposite theme in both di
     await page.waitForFunction(() =>
       document.documentElement.style
         .getPropertyValue("--theme-brush-mask")
-        .includes("%3Cpath"),
+        .includes("data:image/png"),
     );
     await page.waitForTimeout(350);
     await page.screenshot({
@@ -267,30 +266,34 @@ test("identity columns change independently without shifting and reduced motion 
 test("the final slather covers the viewport without a cleanup fade", async ({
   page,
 }) => {
-  const viewport = page.viewportSize() ?? { width: 390, height: 844 };
-  for (let sample = 0; sample < 5; sample++) {
-    const mask = brushMask(
-      createBrushStrokes(viewport.width, viewport.height),
-      1,
-    );
-    const coverage = await page.evaluate(async (mask) => {
-      const image = new Image();
-      image.src = mask.slice(5, -2);
-      await image.decode();
-      const canvas = document.createElement("canvas");
-      canvas.width = 240;
-      canvas.height = 240;
-      const context = canvas.getContext("2d");
-      if (!context) throw new Error("Canvas unavailable");
-      context.drawImage(image, 0, 0, 240, 240);
-      const pixels = context.getImageData(0, 0, 240, 240).data;
-      let covered = 0;
-      for (let index = 3; index < pixels.length; index += 4)
-        if ((pixels[index] ?? 0) >= 250) covered++;
-      return covered / (240 * 240);
-    }, mask);
-    expect(coverage).toBeGreaterThan(0.999);
-  }
+  await terminal(page);
+  await page.evaluate(() => {
+    const root = document.documentElement;
+    new MutationObserver(() => {
+      const mask = root.style.getPropertyValue("--theme-brush-mask");
+      if (mask) root.dataset.lastMask = mask;
+    }).observe(root, { attributes: true, attributeFilter: ["style"] });
+  });
+  await page.getByRole("button", { name: "Use dark theme" }).click();
+  await expect(
+    page.getByRole("button", { name: "Use light theme" }),
+  ).toBeEnabled();
+  const coverage = await page.evaluate(async () => {
+    const image = new Image();
+    image.src = document.documentElement.dataset.lastMask!.slice(5, -2);
+    await image.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = 240;
+    canvas.height = 240;
+    const context = canvas.getContext("2d")!;
+    context.drawImage(image, 0, 0, 240, 240);
+    const pixels = context.getImageData(0, 0, 240, 240).data;
+    let covered = 0;
+    for (let index = 3; index < pixels.length; index += 4)
+      if ((pixels[index] ?? 0) >= 250) covered++;
+    return covered / (240 * 240);
+  });
+  expect(coverage).toBeGreaterThan(0.999);
 });
 
 test("Tab lists choices then cycles forward and backward", async ({ page }) => {
@@ -534,4 +537,25 @@ test("clear removes the submitted command and all earlier output", async ({
     path: `.impeccable/review/cleared-terminal-${test.info().project.name}.png`,
     fullPage: true,
   });
+});
+
+test("failed brush download reports the error and allows retry", async ({
+  page,
+}) => {
+  await terminal(page);
+  await page.route("**/brushes/*.png", (route) => route.abort());
+  await page.getByRole("button", { name: "Use dark theme" }).click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "Brush could not load. Try again.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Use dark theme" }),
+  ).toBeEnabled();
+  await expect(page.locator('[data-theme="light"]')).toBeVisible();
+  await page.unroute("**/brushes/*.png");
+  await page.getByRole("button", { name: "Use dark theme" }).click();
+  await expect(
+    page.getByRole("button", { name: "Use light theme" }),
+  ).toBeEnabled();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });
