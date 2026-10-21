@@ -3,6 +3,7 @@ import {
   createThemeContract,
   globalFontFace,
   globalStyle,
+  keyframes,
 } from "@vanilla-extract/css";
 
 export const tokens = {
@@ -25,8 +26,7 @@ export const tokens = {
     word: 0.45,
     pause: 4800,
     stagger: 1700,
-    brush: 680,
-    brushReveal: 180,
+    brush: 1250,
     ease: [0.16, 1, 0.3, 1] as const,
   },
   layout: {
@@ -94,3 +94,19 @@ globalStyle("button:focus-visible, a:focus-visible, input:focus-visible", {
 });
 globalStyle("::selection", { background: color.selection, color: color.ink });
 globalStyle("h1, h2, p, pre", { margin: 0 });
+
+// Keep the snapshots alive while the brush mask exposes the destination UI.
+const holdTheme = keyframes({ from: { opacity: 1 }, to: { opacity: 1 } });
+globalStyle("::view-transition-group(root)", { animation: "none" });
+globalStyle("::view-transition-image-pair(root)", { isolation: "auto" });
+globalStyle("::view-transition-old(root), ::view-transition-new(root)", {
+  animation: `${holdTheme} 5s linear both`,
+  mixBlendMode: "normal",
+});
+globalStyle("::view-transition-old(root)", { zIndex: 1 });
+globalStyle("::view-transition-new(root)", {
+  zIndex: 2,
+  maskImage: "var(--theme-brush-mask)",
+  maskSize: "100% 100%",
+  maskRepeat: "no-repeat",
+});

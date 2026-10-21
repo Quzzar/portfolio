@@ -10,7 +10,7 @@ Fira Code is self-hosted. It was the closest monospace face in the measured comp
 
 `ls -a` reveals `./play`: an interactive monochrome ASCII wave surface. Pointer movement reshapes the field; a press makes a ripple. Back and Escape restore the terminal transcript and focus. A pause control and still reduced-motion path preserve control.
 
-The user removed the identity pause control and requested centered words. Footer links read GitHub, Resume, LinkedIn. Both the theme button and theme command run one 680ms canvas brush stroke with a bristled edge, followed by a 180ms reveal. The icon rotates and settles during the change. Reduced motion switches immediately.
+The user removed the identity pause control and requested centered words. Footer links read GitHub, Resume, LinkedIn. Both the theme button and theme command reveal the already-rendered opposite theme through six overlapping, randomly ordered brush strokes over 1250ms. Bristles vary per stroke, and direction, angle, and order vary per toggle. Native view snapshots expose text, controls, and background together, with no separate UI fade. The icon rotates and settles during the change. Reduced motion and browsers without view transitions switch immediately.
 
 The project constellation was rejected in favor of the secret terminal. Centered calling-card and offset-note compositions were not selected. Avoid reintroducing them in later refinements.
 

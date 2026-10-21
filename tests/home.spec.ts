@@ -3,39 +3,46 @@ import { test, expect } from "@playwright/test";
 test("theme changes paint in both directions and respect reduced motion", async ({
   page,
 }) => {
-  const clockStart = new Date("2026-10-21T12:00:00Z");
-  await page.clock.install({ time: clockStart });
   await page.goto("/");
   await page.evaluate(() => document.fonts.ready);
-  await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
-  const brush = page.locator('canvas[aria-hidden="true"]');
-  await page.getByRole("button", { name: "Use dark theme" }).click();
-  await expect(brush).toBeVisible();
-  await page.clock.runFor(320);
-  await page.screenshot({
-    path: `.impeccable/review/brush-dark-${test.info().project.name}.png`,
-  });
-  await page.clock.runFor(700);
-  await expect(
-    page.getByRole("button", { name: "Use light theme" }),
-  ).toBeEnabled();
-  await expect(brush).toBeHidden();
-  await page.getByRole("button", { name: "Use light theme" }).click();
-  await expect(brush).toBeVisible();
-  await page.clock.runFor(320);
-  await page.screenshot({
-    path: `.impeccable/review/brush-light-${test.info().project.name}.png`,
-  });
-  await page.clock.runFor(700);
-  await expect(
-    page.getByRole("button", { name: "Use dark theme" }),
-  ).toBeEnabled();
-  await expect(brush).toBeHidden();
-  await page.clock.resume();
+  await page.getByRole("button", { name: "about", exact: true }).click();
+  const input = page.getByRole("textbox", { name: "Terminal command" });
+  await input.press("Enter");
+  const output = page.getByRole("log");
+  const before = await output.innerText();
+  const painting = page.locator('[data-painting="true"]');
+  for (const [from, to] of [
+    ["dark", "light"],
+    ["light", "dark"],
+  ]) {
+    await page.getByRole("button", { name: `Use ${from} theme` }).click();
+    await expect(painting).toBeAttached();
+    // The complete destination UI already exists while the mask paints it in.
+    await expect(page.locator(`[data-theme="${from}"]`)).toBeVisible();
+    await page.waitForFunction(() =>
+      document.documentElement.style
+        .getPropertyValue("--theme-brush-mask")
+        .includes("%3Cpath"),
+    );
+    await page.waitForTimeout(400);
+    await page.screenshot({
+      path: `.impeccable/review/brush-${from}-${test.info().project.name}.png`,
+    });
+    await expect(
+      page.getByRole("button", { name: `Use ${to} theme` }),
+    ).toBeEnabled();
+    expect(await output.innerText()).toBe(before);
+    await expect(input).toHaveValue("");
+  }
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.getByRole("button", { name: "Use dark theme" }).click();
   await expect(page.locator('[data-theme="dark"]')).toBeVisible();
-  await expect(brush).toBeHidden();
+  await expect(painting).toHaveCount(0);
+  expect(
+    await page.evaluate(() =>
+      document.documentElement.style.getPropertyValue("--theme-brush-mask"),
+    ),
+  ).toBe("");
 });
 
 test("the real homepage ships with working local assets and accessible identity", async ({

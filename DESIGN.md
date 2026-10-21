@@ -162,7 +162,7 @@ The stable accessible identity is “Founder, engineer, designer.” Changing vi
 
 ### Footer utilities and theme control
 
-Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. Social links are understated text with small external-link arrows. Hover adds ink and an underline; keyboard focus uses the shared outline. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and swaps the complete semantic palette through a 680ms diagonal brush stroke and a 180ms reveal. A continuous pigment body and irregular bristled edge keep the wipe clean. The icon rotates and settles. The terminal theme command uses the same transition. Reduced motion switches immediately.
+Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. Social links are understated text with small external-link arrows. Hover adds ink and an underline; keyboard focus uses the shared outline. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and reveals the complete destination theme through six overlapping, randomly ordered brush strokes over 1250ms. Native view snapshots preserve the whole interface: every stroke exposes the destination text, controls, and background together. Closely packed bristles give each pass an irregular edge; direction, angle, and stroke order vary each time. There is no final UI fade. The icon rotates and settles. The terminal theme command uses the same transition. Reduced motion switches immediately.
 
 ### Hidden ASCII field
 
