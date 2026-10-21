@@ -5,7 +5,6 @@ import {
   useInView,
   useReducedMotion,
 } from "motion/react";
-import { Pause, Play } from "lucide-react";
 import { tokens } from "../styles/theme.css";
 import * as styles from "../styles/home.css";
 
@@ -23,12 +22,11 @@ export function IdentityWords({
 }) {
   const shouldReduceMotion = useReducedMotion();
   const [indices, setIndices] = useState([0, 0, 0]);
-  const [isPaused, setIsPaused] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const isVisible = useInView(container, { amount: 0.8 });
 
   useEffect(() => {
-    if (shouldReduceMotion || isPaused || isInactive || !isVisible) return;
+    if (shouldReduceMotion || isInactive || !isVisible) return;
     const timers = WORDS.map((_, column) =>
       window.setInterval(
         () => {
@@ -43,7 +41,7 @@ export function IdentityWords({
       ),
     );
     return () => timers.forEach(window.clearInterval);
-  }, [shouldReduceMotion, isPaused, isInactive, isVisible]);
+  }, [shouldReduceMotion, isInactive, isVisible]);
 
   return (
     <div className={styles.identityWrap}>
@@ -71,19 +69,6 @@ export function IdentityWords({
           </div>
         ))}
       </div>
-      {!shouldReduceMotion && (
-        <button
-          type="button"
-          className={styles.pauseWords}
-          onClick={() => setIsPaused((value) => !value)}
-          aria-pressed={isPaused}
-          aria-label={
-            isPaused ? "Resume changing words" : "Pause changing words"
-          }
-        >
-          {isPaused ? <Play size={14} /> : <Pause size={14} />}
-        </button>
-      )}
     </div>
   );
 }

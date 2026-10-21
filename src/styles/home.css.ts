@@ -43,7 +43,7 @@ export const name = style({
 });
 export const identities = style({
   display: "grid",
-  gridTemplateColumns: "8.7ch 10.8ch 9.5ch",
+  gridTemplateColumns: "9.2ch 11.2ch 9.5ch",
   gap: tokens.space.small,
   color: color.secondary,
   width: "fit-content",
@@ -57,7 +57,7 @@ export const wordColumn = style({
   position: "relative",
   height: "1.8em",
   overflow: "hidden",
-  textAlign: "left",
+  textAlign: "center",
   padding: 0,
   margin: 0,
   border: 0,
@@ -66,32 +66,12 @@ export const wordColumn = style({
 export const word = style({
   display: "block",
   position: "absolute",
-  inset: "0 auto auto 0",
+  inset: "0 0 auto 0",
   whiteSpace: "nowrap",
 });
 export const identityWrap = style({
   position: "relative",
   width: "fit-content",
-});
-export const pauseWords = style({
-  position: "absolute",
-  right: "-2rem",
-  top: 0,
-  padding: 0,
-  minWidth: "1.75rem",
-  height: "1.8rem",
-  border: 0,
-  background: "transparent",
-  color: color.subtle,
-  opacity: 0,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  selectors: {
-    [`${identityWrap}:hover &`]: { opacity: 1 },
-    "&:focus-visible": { opacity: 1 },
-  },
-  "@media": { "(hover: none)": { opacity: 1, right: "-1.5rem" } },
 });
 export const homeContent = style({
   flex: 1,
@@ -247,6 +227,20 @@ export const themeButton = style([
   textButton,
   { justifyContent: "center", minWidth: "2.75rem", flexShrink: 0, padding: 0 },
 ]);
+export const themeIcon = style({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+export const themeBrush = style({
+  position: "fixed",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  zIndex: 100,
+  pointerEvents: "auto",
+  selectors: { "&[hidden]": { display: "none" } },
+});
 export const screenReader = style({
   position: "absolute",
   width: "1px",

@@ -1,7 +1,5 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
-import { useSetAtom } from "jotai";
-import { themeAtom } from "../atoms/theme";
 import { COMMANDS, resolveCommand } from "../lib/commands";
 import type { ContentView } from "../lib/commands";
 import { TerminalOutput } from "./TerminalOutput";
@@ -9,6 +7,7 @@ import * as styles from "../styles/home.css";
 
 export type TerminalHandle = {
   execute: (command: string) => void;
+  fill: (command: string) => void;
   focus: () => void;
 };
 type Entry = {
@@ -17,11 +16,15 @@ type Entry = {
   view: ContentView;
   message?: string;
 };
-type Props = { onExpanded: (isExpanded: boolean) => void; onPlay: () => void };
+type Props = {
+  onExpanded: (isExpanded: boolean) => void;
+  onPlay: () => void;
+  onTheme: () => void;
+};
 
 /** A bounded transcript with shell-style history and allowlisted completion. */
 export const Terminal = forwardRef<TerminalHandle, Props>(function Terminal(
-  { onExpanded, onPlay },
+  { onExpanded, onPlay, onTheme },
   ref,
 ) {
   const [input, setInput] = useState("");
@@ -31,7 +34,6 @@ export const Terminal = forwardRef<TerminalHandle, Props>(function Terminal(
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const sequence = useRef(0);
-  const setTheme = useSetAtom(themeAtom);
 
   function execute(command: string): void {
     if (!command.trim()) return;
@@ -51,8 +53,7 @@ export const Terminal = forwardRef<TerminalHandle, Props>(function Terminal(
     } else if (result.kind === "clear" || result.kind === "exit") {
       setEntries([]);
       onExpanded(false);
-    } else if (result.kind === "theme")
-      setTheme((previous) => (previous === "light" ? "dark" : "light"));
+    } else if (result.kind === "theme") onTheme();
     else if (result.kind === "play") onPlay();
     inputRef.current?.focus({ preventScroll: true });
     if (result.kind !== "play")
@@ -66,6 +67,14 @@ export const Terminal = forwardRef<TerminalHandle, Props>(function Terminal(
 
   useImperativeHandle(ref, () => ({
     execute,
+    fill: (command: string) => {
+      setInput(command);
+      setHistoryIndex(null);
+      inputRef.current?.focus({ preventScroll: true });
+      requestAnimationFrame(() =>
+        inputRef.current?.setSelectionRange(command.length, command.length),
+      );
+    },
     focus: () => inputRef.current?.focus(),
   }));
 

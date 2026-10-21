@@ -1,5 +1,43 @@
 import { test, expect } from "@playwright/test";
 
+test("theme changes paint in both directions and respect reduced motion", async ({
+  page,
+}) => {
+  const clockStart = new Date("2026-10-21T12:00:00Z");
+  await page.clock.install({ time: clockStart });
+  await page.goto("/");
+  await page.evaluate(() => document.fonts.ready);
+  await page.clock.pauseAt(new Date(clockStart.getTime() + 1000));
+  const brush = page.locator('canvas[aria-hidden="true"]');
+  await page.getByRole("button", { name: "Use dark theme" }).click();
+  await expect(brush).toBeVisible();
+  await page.clock.runFor(320);
+  await page.screenshot({
+    path: `.impeccable/review/brush-dark-${test.info().project.name}.png`,
+  });
+  await page.clock.runFor(700);
+  await expect(
+    page.getByRole("button", { name: "Use light theme" }),
+  ).toBeEnabled();
+  await expect(brush).toBeHidden();
+  await page.getByRole("button", { name: "Use light theme" }).click();
+  await expect(brush).toBeVisible();
+  await page.clock.runFor(320);
+  await page.screenshot({
+    path: `.impeccable/review/brush-light-${test.info().project.name}.png`,
+  });
+  await page.clock.runFor(700);
+  await expect(
+    page.getByRole("button", { name: "Use dark theme" }),
+  ).toBeEnabled();
+  await expect(brush).toBeHidden();
+  await page.clock.resume();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("button", { name: "Use dark theme" }).click();
+  await expect(page.locator('[data-theme="dark"]')).toBeVisible();
+  await expect(brush).toBeHidden();
+});
+
 test("the real homepage ships with working local assets and accessible identity", async ({
   page,
 }) => {
@@ -21,7 +59,7 @@ test("the real homepage ships with working local assets and accessible identity"
     page.getByText("Founder, engineer, designer.", { exact: true }),
   ).toBeAttached();
   await expect(
-    page.getByRole("link", { name: "Résumé", exact: true }),
+    page.getByRole("link", { name: "Resume", exact: true }),
   ).toHaveAttribute("href", "/resume/Resume.pdf");
   expect(
     await page.evaluate(
@@ -30,6 +68,23 @@ test("the real homepage ships with working local assets and accessible identity"
   ).toBe(true);
   const resume = await page.request.get("/resume/Resume.pdf");
   expect(resume.status()).toBe(200);
+  await expect(page.locator("footer a")).toHaveText([
+    "GitHub",
+    "Resume",
+    "LinkedIn",
+  ]);
+  await page
+    .getByRole("navigation")
+    .getByRole("button", { name: "about", exact: true })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "Terminal command" }),
+  ).toHaveValue("about");
+  await expect(
+    page.getByRole("textbox", { name: "Terminal command" }),
+  ).toBeFocused();
+  await expect(page.getByRole("log")).toHaveCount(0);
+  await page.getByRole("textbox", { name: "Terminal command" }).press("Escape");
   expect(resume.headers()["content-type"]).toContain("pdf");
   expect(failures).toEqual([]);
   await page.evaluate(() => document.fonts.ready);
@@ -77,6 +132,12 @@ test("commands, errors, completion, history, clear and clickable alternatives wo
     .getByRole("navigation", { name: "Explore" })
     .getByRole("button", { name: "work", exact: true })
     .click();
+  await expect(input).toHaveValue("work");
+  await expect(input).toBeFocused();
+  await expect(
+    page.getByRole("link", { name: "Wanderer’s Guide" }),
+  ).toHaveCount(0);
+  await input.press("Enter");
   await expect(
     page.getByRole("link", { name: "Wanderer’s Guide" }),
   ).toHaveAttribute("href", "https://wanderersguide.app/");
@@ -109,6 +170,9 @@ test("hidden play field returns to the previous transcript and theme works", asy
   await expect(input).toBeFocused();
   await page.getByRole("button", { name: "Use dark theme" }).click();
   await expect(page.locator('[data-theme="dark"]')).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Use light theme" }),
+  ).toBeEnabled();
   await page.screenshot({
     path: `.impeccable/review/dark-${test.info().project.name}.png`,
     fullPage: true,
@@ -129,10 +193,28 @@ test("identity columns change independently without shifting and reduced motion 
   await expect(header).toContainText("builder.", { timeout: 7500 });
   const after = await header.boundingBox();
   expect(after?.height).toBe(initial?.height);
-  await page.getByRole("button", { name: "Pause changing words" }).click();
   await expect(
-    page.getByRole("button", { name: "Resume changing words" }),
-  ).toBeAttached();
+    page.getByRole("button", { name: /changing words/ }),
+  ).toHaveCount(0);
+  const centered = await page
+    .locator('header [aria-hidden="true"]')
+    .evaluateAll((columns) =>
+      columns.every((column) => {
+        const word = column.querySelector("span");
+        if (!word) return false;
+        const range = document.createRange();
+        range.selectNodeContents(word);
+        const textBox = range.getBoundingClientRect();
+        const columnBox = column.getBoundingClientRect();
+        return (
+          Math.abs(
+            (textBox.left + textBox.right) / 2 -
+              (columnBox.left + columnBox.right) / 2,
+          ) < 1
+        );
+      }),
+    );
+  expect(centered).toBe(true);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
   await expect(header).toContainText("founder.");
