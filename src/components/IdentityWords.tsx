@@ -22,11 +22,7 @@ const WORDS = [
 const INITIAL_WORDS = ["founder", "engineer", "designer"];
 
 /** Three independent clipped lines, borrowing Prebreak’s masked phrase transition. */
-export function IdentityWords({
-  isInactive = false,
-}: {
-  isInactive?: boolean;
-}) {
+export function IdentityWords() {
   const shouldReduceMotion = useReducedMotion();
   const [displayed, setDisplayed] = useState(INITIAL_WORDS);
   const displayedRef = useRef(INITIAL_WORDS);
@@ -35,7 +31,7 @@ export function IdentityWords({
   const isVisible = useInView(container, { amount: 0.8 });
 
   useEffect(() => {
-    if (shouldReduceMotion || isInactive || !isVisible) return;
+    if (shouldReduceMotion || !isVisible) return;
     const timers: number[] = [];
     const schedule = (column: number): void => {
       timers[column] = window.setTimeout(
@@ -72,7 +68,7 @@ export function IdentityWords({
     };
     INITIAL_WORDS.forEach((_, column) => schedule(column));
     return () => timers.forEach(window.clearTimeout);
-  }, [shouldReduceMotion, isInactive, isVisible]);
+  }, [shouldReduceMotion, isVisible]);
 
   return (
     <div className={styles.identityWrap}>

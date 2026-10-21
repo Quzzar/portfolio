@@ -148,13 +148,13 @@ export function AsciiField({ onClose }: Props) {
       <canvas
         ref={canvasRef}
         className={styles.canvas}
-        aria-label="An abstract field of ASCII waves. Move or touch to reshape it."
+        aria-label="Interactive ASCII waves."
         role="img"
       />
       <div className={styles.playTop}>
         <button ref={backRef} onClick={onClose} className={styles.textButton}>
           <ArrowLeft size={16} aria-hidden="true" />
-          &nbsp; back to almost nothing
+          &nbsp; Back
         </button>
         {!shouldReduceMotion && (
           <button
@@ -165,10 +165,6 @@ export function AsciiField({ onClose }: Props) {
             {isPaused ? <Play size={18} /> : <Pause size={18} />}
           </button>
         )}
-      </div>
-      <div className={styles.playCaption}>
-        <p>move. touch. make a ripple.</p>
-        <p className={styles.playKeyHint}>esc to return</p>
       </div>
     </main>
   );

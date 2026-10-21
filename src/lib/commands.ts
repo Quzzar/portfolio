@@ -113,7 +113,7 @@ export const PROJECTS: readonly Project[] = [
   },
   {
     name: "More on GitHub",
-    detail: "The rest of the rabbit hole.",
+    detail: "",
     url: "https://github.com/Quzzar",
   },
 ];
