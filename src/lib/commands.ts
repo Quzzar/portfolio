@@ -6,7 +6,6 @@ export type ContentView =
   | "resume"
   | "files"
   | "hidden"
-  | "hello"
   | "coffee"
   | "sudo"
   | "error";
@@ -35,6 +34,8 @@ export const COMMANDS = [
 export function resolveCommand(input: string): CommandResult {
   const command = input.trim().toLowerCase().replace(/\s+/g, " ");
   switch (command) {
+    case "hello":
+    case "hi":
     case "help":
     case "?":
       return { kind: "content", view: "help" };
@@ -58,9 +59,6 @@ export function resolveCommand(input: string): CommandResult {
     case "ls -a":
     case "ls -la":
       return { kind: "content", view: "hidden" };
-    case "hello":
-    case "hi":
-      return { kind: "content", view: "hello" };
     case "coffee":
       return { kind: "content", view: "coffee" };
     case "sudo":

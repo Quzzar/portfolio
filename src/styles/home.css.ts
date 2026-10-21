@@ -95,11 +95,6 @@ export const textButton = style({
   },
 });
 export const terminal = style({ marginTop: "3.6rem" });
-export const hint = style({
-  color: color.subtle,
-  fontSize: tokens.size.utility,
-  marginTop: tokens.space.tiny,
-});
 export const footer = style({
   display: "flex",
   alignItems: "center",

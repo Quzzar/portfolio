@@ -32,6 +32,10 @@ test("homepage ships a terminal emulator, assets, and no form navigation", async
     page.getByRole("heading", { name: "Aaron Cassar" }),
   ).toBeVisible();
   await expect(page.locator("input, form")).toHaveCount(0);
+  await expect(page.locator("#terminal-hint")).toHaveCount(0);
+  await expect(
+    page.getByText("Esc leaves the terminal", { exact: false }),
+  ).toHaveCount(0);
   await expect(page.getByRole("navigation")).toHaveCount(0);
   await expect(page.locator(".xterm-cursor-block")).toBeAttached();
   await expect(page.locator("footer a")).toHaveText([
@@ -295,6 +299,9 @@ test("Mac-style completion expands a prefix then cycles forward and backward", a
   await input.pressSequentially("he");
   await input.press("Tab");
   await expect(currentLine(page)).toContainText("% hel");
+  await expect(screen(page)).not.toContainText("hello");
+  await input.press("Tab");
+  await expect(currentLine(page)).toContainText("% hel");
   await expect(screen(page)).toContainText("hello");
   await expect(screen(page)).toContainText("help");
   await input.press("Tab");
@@ -314,7 +321,8 @@ test("Mac-style completion expands a prefix then cycles forward and backward", a
   await expect(currentLine(page)).toContainText("% hellox");
   await input.press("Backspace");
   await input.press("Enter");
-  await expect(screen(page)).toContainText("Hello, stranger.");
+  await expect(screen(page)).toContainText("Curious? Try ls -a.");
+  await expect(screen(page)).not.toContainText("Hello, stranger");
   await input.pressSequentially("draft");
   await input.press("ArrowUp");
   await expect(currentLine(page)).toContainText("% hello");

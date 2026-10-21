@@ -15,6 +15,7 @@ export type Completion = {
   choices: string[];
   common: string;
   index: number;
+  listed: boolean;
 };
 
 /** The shell layer completes the token at the caret, preserving the rest of the line. */
@@ -43,5 +44,6 @@ export function completeToken(line: string, cursor: number): Completion | null {
     choices,
     common,
     index: -1,
+    listed: false,
   };
 }

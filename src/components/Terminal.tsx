@@ -67,7 +67,6 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
       term.loadAddon(echo);
       term.open(element);
       term.textarea?.setAttribute("aria-label", "Terminal input");
-      term.textarea?.setAttribute("aria-describedby", "terminal-hint");
       const expand = (value: boolean) => callbacks.current.onExpanded(value);
       let completion: Completion | null = null;
       let generation = 0;
@@ -82,6 +81,11 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
         await echo.whenReady();
         if (disposed || revision !== generation) return;
         if (completion) {
+          if (!completion.listed) {
+            completion.listed = true;
+            await echo.showCompletions(completion.choices);
+            return;
+          }
           completion.index =
             (completion.index + direction + completion.choices.length) %
             completion.choices.length;
@@ -99,8 +103,12 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
         } else {
           completion = next;
           const value = next.before + next.common;
+          const expanded = value !== echo.getLine().slice(0, echo.getCursor());
           echo.updateLine(value + next.after, value.length);
-          await echo.showCompletions(next.choices);
+          if (!expanded) {
+            next.listed = true;
+            await echo.showCompletions(next.choices);
+          }
         }
       }
       term.attachCustomKeyEventHandler((event) => {
@@ -270,9 +278,6 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
     return (
       <section className={styles.terminal} aria-label="Interactive terminal">
         <div ref={host} className={styles.terminalEmulator} />
-        <p id="terminal-hint" className={styles.hint}>
-          try “help” · Tab completes · Esc leaves the terminal
-        </p>
         {error && <p role="alert">{error}</p>}
       </section>
     );
