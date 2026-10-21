@@ -272,3 +272,13 @@ globalStyle(`${terminalLink}::after`, {
   animation: `${drawLine} ${interaction} both`,
   "@media": { "(prefers-reduced-motion: reduce)": { animation: "none" } },
 });
+
+export const territoryCanvas = style({
+  position: "fixed",
+  inset: 0,
+  width: "100vw",
+  height: "100dvh",
+  pointerEvents: "none",
+  zIndex: 10,
+  viewTransitionName: "territory-units",
+});

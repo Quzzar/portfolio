@@ -10,86 +10,130 @@ import { useAtom } from "jotai";
 import { motion, useReducedMotion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { themeAtom } from "../atoms/theme";
-import { createBrushPainting } from "../lib/paint-brush";
+import { createTerritoryBattle } from "../lib/territory-renderer";
+import type { Point } from "../lib/territory";
 import { tokens } from "../styles/theme.css";
 import * as styles from "../styles/home.css";
 
-export type ThemeToggleHandle = { toggle: () => void };
+export type ThemeToggleHandle = { toggle: (origin?: Point) => void };
 
-/** The button and terminal share one brush transition and one theme update. */
+/** The button and terminal share one territory simulation and one theme update. */
 export const ThemeToggle = forwardRef<ThemeToggleHandle>(
   function ThemeToggle(_, ref) {
     const [theme, setTheme] = useAtom(themeAtom);
     const shouldReduceMotion = useReducedMotion();
     const [isChanging, setIsChanging] = useState(false);
-    const [hasBrushError, setHasBrushError] = useState(false);
-    const paintingRef = useRef<Awaited<
-      ReturnType<typeof createBrushPainting>
+    const [hasBattleError, setHasBattleError] = useState(false);
+    const battleRef = useRef<Awaited<
+      ReturnType<typeof createTerritoryBattle>
     > | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
     const isRunning = useRef(false);
     const transitionRef = useRef<ViewTransition | null>(null);
 
     useEffect(
       () => () => {
-        paintingRef.current?.dispose();
+        battleRef.current?.dispose();
         transitionRef.current?.skipTransition();
-        document.documentElement.style.removeProperty("--theme-brush-mask");
+        document.documentElement.style.removeProperty("--theme-territory-mask");
       },
       [],
     );
 
-    async function toggle(): Promise<void> {
+    async function toggle(origin?: Point): Promise<void> {
       if (isRunning.current) return;
       const next = theme === "light" ? "dark" : "light";
-      if (shouldReduceMotion || !document.startViewTransition) {
+      if (
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+        !document.startViewTransition
+      ) {
         setTheme(next);
         return;
       }
       isRunning.current = true;
       setIsChanging(true);
       const root = document.documentElement;
-      setHasBrushError(false);
+      setHasBattleError(false);
       try {
-        const painting = await createBrushPainting();
-        paintingRef.current = painting;
-        root.style.setProperty("--theme-brush-mask", painting.initialMask);
+        const canvas = canvasRef.current;
+        const button = buttonRef.current;
+        if (!canvas || !button) throw new Error("Battle surface unavailable");
+        const bounds = button.getBoundingClientRect();
+        const seed = origin ?? {
+          x: bounds.x + bounds.width / 2,
+          y: bounds.y + bounds.height / 2,
+        };
+        canvas.dataset["originX"] = String(seed.x);
+        canvas.dataset["originY"] = String(seed.y);
+        const battle = createTerritoryBattle(canvas, seed, next);
+        battleRef.current = battle;
+        root.style.setProperty("--theme-territory-mask", battle.initialMask);
         const transition = document.startViewTransition(() => {
           flushSync(() => setTheme(next));
         });
         transitionRef.current = transition;
         await transition.ready;
-        await painting.play((mask) => {
-          root.style.setProperty("--theme-brush-mask", mask);
+        const winner = await battle.play((mask) => {
+          root.style.setProperty("--theme-territory-mask", mask);
         });
+        if (winner !== 1) flushSync(() => setTheme(theme));
         transition.skipTransition();
         await transition.finished;
       } catch (error) {
-        console.error("Theme painting failed.", error);
-        if (!transitionRef.current) setHasBrushError(true);
+        console.error("Theme battle failed.", error);
+        setHasBattleError(true);
+        flushSync(() => setTheme(theme));
         transitionRef.current?.skipTransition();
       } finally {
-        paintingRef.current?.dispose();
-        paintingRef.current = null;
-        root.style.removeProperty("--theme-brush-mask");
+        battleRef.current?.dispose();
+        battleRef.current = null;
+        root.style.removeProperty("--theme-territory-mask");
         transitionRef.current = null;
         isRunning.current = false;
         setIsChanging(false);
       }
     }
 
+    useEffect(() => {
+      if (!isChanging) return;
+      // Interaction takes priority over watching the battle; cancellation preserves the current theme.
+      const interrupt = () => battleRef.current?.dispose();
+      const hidden = () => {
+        if (document.hidden) interrupt();
+      };
+      window.addEventListener("keydown", interrupt, true);
+      window.addEventListener("pointerdown", interrupt, true);
+      window.addEventListener("resize", interrupt);
+      document.addEventListener("visibilitychange", hidden);
+      return () => {
+        window.removeEventListener("keydown", interrupt, true);
+        window.removeEventListener("pointerdown", interrupt, true);
+        window.removeEventListener("resize", interrupt);
+        document.removeEventListener("visibilitychange", hidden);
+      };
+    }, [isChanging]);
+
     useImperativeHandle(ref, () => ({ toggle }));
 
     return (
       <>
-        {hasBrushError && (
-          <span role="alert">Brush could not load. Try again.</span>
+        <canvas
+          ref={canvasRef}
+          className={styles.territoryCanvas}
+          aria-hidden="true"
+          data-battle={isChanging}
+        />
+        {hasBattleError && (
+          <span role="alert">Battle could not start. Try again.</span>
         )}
         <button
+          ref={buttonRef}
           className={styles.themeButton}
           disabled={isChanging}
-          data-painting={isChanging}
+          data-battling={isChanging}
           aria-label={theme === "light" ? "Use dark theme" : "Use light theme"}
-          onClick={toggle}
+          onClick={() => void toggle()}
         >
           <motion.span
             className={styles.themeIcon}

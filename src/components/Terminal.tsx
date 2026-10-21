@@ -19,10 +19,12 @@ import { DARK_PALETTE, LIGHT_PALETTE, tokens } from "../styles/theme.css";
 import * as styles from "../styles/home.css";
 import "@xterm/xterm/css/xterm.css";
 
+import type { Point } from "../lib/territory";
+
 export type TerminalHandle = { focus: () => void };
 type Props = {
   onPlay: () => void;
-  onTheme: () => void;
+  onTheme: (origin: Point) => void;
 };
 const PROMPT = "visitor@aaron ~ % ";
 
@@ -214,14 +216,45 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
           try {
             const command = await echo.read(PROMPT);
             resetCompletion();
-            if (disposed) return;
+            if (disposed || !element) return;
             if (!command.trim()) continue;
             const result = resolveCommand(command);
             if (result.kind === "clear" || result.kind === "exit") {
               // Erase after queued input redraws so the submitted command cannot reappear.
               term.write("\x1b[2J\x1b[3J\x1b[H");
-            } else if (result.kind === "theme") callbacks.current.onTheme();
-            else if (result.kind === "play") callbacks.current.onPlay();
+            } else if (result.kind === "theme") {
+              // Drain xterm's queued echo before locating the submitted word, including wrapped rows.
+              await new Promise<void>((resolve) => term.write("", resolve));
+              const rows = element.querySelector(".xterm-rows");
+              const start =
+                rows?.textContent?.toLowerCase().lastIndexOf("theme") ?? -1;
+              if (!rows || start < 0)
+                throw new Error("Submitted theme command is not visible");
+              const walker = document.createTreeWalker(
+                rows,
+                NodeFilter.SHOW_TEXT,
+              );
+              const range = document.createRange();
+              let node = walker.nextNode();
+              let offset = 0;
+              while (node) {
+                const length = node.textContent?.length ?? 0;
+                if (start >= offset && start < offset + length)
+                  range.setStart(node, start - offset);
+                if (start + 5 > offset && start + 5 <= offset + length) {
+                  range.setEnd(node, start + 5 - offset);
+                  break;
+                }
+                offset += length;
+                node = walker.nextNode();
+              }
+              const bounds =
+                range.getClientRects()[0] ?? range.getBoundingClientRect();
+              callbacks.current.onTheme({
+                x: bounds.x + bounds.width / 2,
+                y: bounds.y + bounds.height / 2,
+              });
+            } else if (result.kind === "play") callbacks.current.onPlay();
             else if (result.kind === "content") {
               echo.println("");
               echo.println(terminalResponse(result.view, result.message));

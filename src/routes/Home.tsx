@@ -80,7 +80,7 @@ export function Home() {
             <Terminal
               ref={terminal}
               onPlay={() => setIsPlaying(true)}
-              onTheme={() => themeToggle.current?.toggle()}
+              onTheme={(origin) => themeToggle.current?.toggle(origin)}
             />
           </Suspense>
         </main>

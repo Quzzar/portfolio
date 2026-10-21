@@ -94,19 +94,31 @@ globalStyle("button:focus-visible, a:focus-visible, input:focus-visible", {
 globalStyle("::selection", { background: color.selection, color: color.ink });
 globalStyle("h1, h2, p, pre", { margin: 0 });
 
-// Keep the snapshots alive while the brush mask exposes the destination UI.
+// Keep the snapshots alive while the territory mask exposes the destination UI.
 const holdTheme = keyframes({ from: { opacity: 1 }, to: { opacity: 1 } });
+globalStyle("::view-transition", { pointerEvents: "none" });
 globalStyle("::view-transition-group(root)", { animation: "none" });
 globalStyle("::view-transition-image-pair(root)", { isolation: "auto" });
 globalStyle("::view-transition-old(root), ::view-transition-new(root)", {
-  animation: `${holdTheme} 5s linear both`,
+  animation: `${holdTheme} 60s linear both`,
   mixBlendMode: "normal",
 });
 globalStyle("::view-transition-old(root)", { zIndex: 1 });
 globalStyle("::view-transition-new(root)", {
   zIndex: 2,
-  maskImage: "var(--theme-brush-mask)",
-  maskSize: "cover",
+  maskImage: "var(--theme-territory-mask)",
+  maskSize: "100% 100%",
   maskPosition: "center",
   maskRepeat: "no-repeat",
+});
+
+// The canvas remains live above both theme snapshots while troops move.
+globalStyle("::view-transition-group(territory-units)", {
+  zIndex: 3,
+  animation: "none",
+});
+globalStyle("::view-transition-old(territory-units)", { display: "none" });
+globalStyle("::view-transition-new(territory-units)", {
+  animation: "none",
+  mixBlendMode: "normal",
 });
