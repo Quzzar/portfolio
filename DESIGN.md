@@ -77,7 +77,7 @@ components:
 
 **Creative North Star: "A quiet page with a secret terminal"**
 
-A compact personal introduction typeset like a live text program on a light sheet. Self-hosted monospace, blue-black ink, steel text, and generous whitespace establish the approved quiet, coder-like character.
+A compact personal introduction above a wide terminal, typeset like a live text program on a light sheet. Self-hosted monospace, blue-black ink, steel text, and generous whitespace establish the approved quiet, coder-like character.
 
 The visible prompt is a working browser terminal. Three independently changing identity words add restrained motion; the monochrome ASCII field remains a discovery behind a command. Interaction supplies the surprise without adding desktop-window decoration.
 
@@ -183,3 +183,7 @@ Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. So
 - Don't replace the approved identity with the superseded software-engineer subtitle.
 - Don't expose the ASCII field as decoration in the first viewport.
 - Don't disguise arbitrary code execution as a terminal command.
+
+### Terminal workspace
+
+The main column is centered and up to 56rem wide. The terminal reserves `clamp(22rem, 48svh, 36rem)` for readable output; it does not resize while typing. The introduction begins at `clamp(4rem, 14svh, 10rem)` on desktop and `clamp(3rem, 10svh, 6rem)` on mobile so the expanded terminal remains usable above the footer.

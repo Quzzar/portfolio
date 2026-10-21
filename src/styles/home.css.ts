@@ -14,12 +14,11 @@ export const page = style({
 });
 export const main = style({
   width: `min(${tokens.layout.width}, calc(100% - 3rem))`,
-  marginLeft: "32.62%",
+  marginInline: "auto",
   paddingTop: tokens.layout.top,
   paddingBottom: tokens.space.large,
   flex: 1,
   "@media": {
-    "(max-width: 800px)": { marginInline: "auto" },
     "(max-width: 520px)": { paddingTop: tokens.layout.mobileTop },
   },
 });
@@ -191,7 +190,7 @@ export const playKeyHint = style({
 
 export const terminalEmulator = style({
   width: "100%",
-  height: "clamp(14rem, 32svh, 22rem)",
+  height: "clamp(22rem, 48svh, 36rem)",
   outline: "none",
 });
 globalStyle(`${terminalEmulator} .xterm`, { padding: 0 });
