@@ -25,7 +25,6 @@ const Terminal = lazy(() =>
 
 export function Home() {
   const theme = useAtomValue(themeAtom);
-  const [hasOutput, setHasOutput] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const terminal = useRef<TerminalHandle>(null);
   const themeToggle = useRef<ThemeToggleHandle>(null);
@@ -69,7 +68,7 @@ export function Home() {
           <header>
             <p className={styles.directory}>~/aaron</p>
             <h1 className={styles.name}>Aaron Cassar</h1>
-            <IdentityWords isInactive={hasOutput || isPlaying} />
+            <IdentityWords />
           </header>
           <Suspense
             fallback={
@@ -80,7 +79,6 @@ export function Home() {
           >
             <Terminal
               ref={terminal}
-              onExpanded={setHasOutput}
               onPlay={() => setIsPlaying(true)}
               onTheme={() => themeToggle.current?.toggle()}
             />

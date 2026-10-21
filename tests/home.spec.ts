@@ -66,7 +66,7 @@ test("terminal Tab completes and prints ambiguous matches inside the terminal", 
   await input.press("Tab");
   await expect(currentLine(page)).toContainText("% about ");
   await input.press("Enter");
-  await expect(screen(page)).toContainText("worlds.");
+  await expect(screen(page)).toContainText("System design. Product design.");
   await input.pressSequentially("cat ");
   await input.press("Tab");
   await expect(screen(page)).toContainText("about.txt");
@@ -80,7 +80,7 @@ test("terminal Tab completes and prints ambiguous matches inside the terminal", 
   await input.press("Shift+Tab");
   await expect(currentLine(page)).toContainText("% cat about.txt");
   await input.press("Enter");
-  await expect(screen(page)).toContainText("worlds.");
+  await expect(screen(page)).toContainText("System design. Product design.");
   await input.press("ArrowUp");
   await expect(currentLine(page)).toContainText("% cat about.txt");
   await page.screenshot({
@@ -90,14 +90,16 @@ test("terminal Tab completes and prints ambiguous matches inside the terminal", 
   await input.press("Control+c");
   await expect(screen(page)).toContainText("^C");
   await command(page, "clear");
-  await expect(screen(page)).not.toContainText("worlds.");
+  await expect(screen(page)).not.toContainText(
+    "System design. Product design.",
+  );
   await input.pressSequentially("ct about.txt");
   await input.press("Home");
   await input.press("ArrowRight");
   await input.pressSequentially("a");
   await input.press("End");
   await input.press("Enter");
-  await expect(screen(page)).toContainText("worlds.");
+  await expect(screen(page)).toContainText("System design. Product design.");
 });
 
 test("terminal commands, history, resize, interruption, and playground work", async ({
@@ -116,12 +118,12 @@ test("terminal commands, history, resize, interruption, and playground work", as
   await expect(
     page.getByRole("main", { name: "Interactive ASCII playground" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "back to almost nothing" }).click();
+  await page.getByRole("button", { name: "Back" }).click();
   await expect(input).toBeFocused();
   await input.press("Control+l");
   await expect(screen(page)).not.toContainText("Command not found:");
   await command(page, "about");
-  await expect(screen(page)).toContainText("worlds.");
+  await expect(screen(page)).toContainText("System design. Product design.");
   await page.setViewportSize({ width: 320, height: 740 });
   await expect
     .poll(async () => {
@@ -143,7 +145,7 @@ test("paint slathers partial patches over the complete opposite theme in both di
 }) => {
   await terminal(page);
   await command(page, "about");
-  await expect(screen(page)).toContainText("worlds.");
+  await expect(screen(page)).toContainText("System design. Product design.");
   for (const [next, after] of [
     ["dark", "light"],
     ["light", "dark"],
@@ -162,7 +164,7 @@ test("paint slathers partial patches over the complete opposite theme in both di
     await expect(
       page.getByRole("button", { name: `Use ${after} theme` }),
     ).toBeEnabled();
-    await expect(screen(page)).toContainText("worlds.");
+    await expect(screen(page)).toContainText("System design. Product design.");
   }
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.getByRole("button", { name: "Use dark theme" }).click();
@@ -324,7 +326,7 @@ test("Tab lists choices then cycles forward and backward", async ({ page }) => {
   await expect(currentLine(page)).toContainText("% hellox");
   await input.press("Backspace");
   await input.press("Enter");
-  await expect(screen(page)).toContainText("Curious? Try ls -a.");
+  await expect(screen(page)).toContainText("resume");
   await expect(screen(page)).not.toContainText("Hello, stranger");
   await input.pressSequentially("draft");
   await input.press("ArrowUp");
@@ -396,9 +398,12 @@ test("terminal has room to read output without moving the prompt layout", async 
   if (test.info().project.name === "desktop")
     expect(box?.width).toBeGreaterThanOrEqual(850);
   await command(page, "help");
+  await expect(screen(page)).not.toContainText(
+    /Tab completes|Curious|A little|conversation|Things I’ve/,
+  );
   if (test.info().project.name === "desktop") {
-    await expect(screen(page)).toContainText("work      Things");
-    await expect(screen(page)).toContainText("Curious? Try ls -a.");
+    await expect(screen(page)).toContainText("work");
+    await expect(screen(page)).toContainText("resume");
   }
   expect(await host.boundingBox()).toEqual(box);
   await page.screenshot({
@@ -430,4 +435,57 @@ test("ambiguous Tab lists matches before selecting or cycling", async ({
   }
   await press("Shift+Tab");
   await expect(currentLine(page)).toHaveText(/% contact\s*$/);
+});
+
+test("page fits short viewports with a compact top inset", async ({ page }) => {
+  await terminal(page);
+  for (const [width, height] of [
+    [1180, 700],
+    [760, 600],
+    [390, 700],
+    [320, 568],
+    [844, 390],
+  ]) {
+    await page.setViewportSize({ width: width!, height: height! });
+    await expect
+      .poll(() =>
+        page.evaluate(() => ({
+          fits:
+            document.documentElement.scrollHeight <= innerHeight + 1 &&
+            document.documentElement.scrollWidth <= innerWidth,
+          footer:
+            document.querySelector("footer")!.getBoundingClientRect().bottom <=
+            innerHeight + 1,
+          top:
+            document.querySelector("header")!.getBoundingClientRect().top <= 55,
+        })),
+      )
+      .toEqual({ fits: true, footer: true, top: true });
+  }
+});
+
+test("identity keeps changing after terminal output", async ({ page }) => {
+  await page.clock.install();
+  await terminal(page);
+  await command(page, "contact");
+  await expect(screen(page)).toContainText("contact@aaroncassar.com");
+  await page.clock.pauseAt(
+    new Date(await page.evaluate(() => Date.now() + 1000)),
+  );
+  const columns = page.locator("[data-identity-column]");
+  const before = await columns.evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("data-word")),
+  );
+  const changed = [false, false, false];
+  for (let elapsed = 0; elapsed < 6500; elapsed += 500) {
+    await page.clock.runFor(500);
+    const words = await columns.evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute("data-word")),
+    );
+    words.forEach((word, index) => {
+      if (word !== before[index]) changed[index] = true;
+    });
+    expect(new Set(words).size).toBe(3);
+  }
+  expect(changed).toEqual([true, true, true]);
 });

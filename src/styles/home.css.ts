@@ -2,7 +2,7 @@ import { globalStyle, style } from "@vanilla-extract/css";
 import { color, tokens } from "./theme.css";
 
 export const page = style({
-  minHeight: "100svh",
+  height: "100dvh",
   color: color.ink,
   background: color.paper,
   fontSize: tokens.size.body,
@@ -16,8 +16,11 @@ export const main = style({
   width: `min(${tokens.layout.width}, calc(100% - 3rem))`,
   marginInline: "auto",
   paddingTop: tokens.layout.top,
-  paddingBottom: tokens.space.large,
+  paddingBottom: tokens.space.small,
   flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
   "@media": {
     "(max-width: 520px)": { paddingTop: tokens.layout.mobileTop },
   },
@@ -71,6 +74,7 @@ export const identityWrap = style({
 });
 export const homeContent = style({
   flex: 1,
+  minHeight: 0,
   display: "flex",
   flexDirection: "column",
   selectors: { "&[hidden]": { display: "none" } },
@@ -93,18 +97,24 @@ export const textButton = style({
     },
   },
 });
-export const terminal = style({ marginTop: "3.6rem" });
+export const terminal = style({
+  marginTop: "clamp(1.5rem, 4dvh, 2.5rem)",
+  display: "flex",
+  flexDirection: "column",
+  flex: 1,
+  minHeight: 0,
+});
 export const footer = style({
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
   gap: tokens.space.medium,
-  padding: `1.5rem ${tokens.layout.edge} 2.6rem`,
+  padding: `0.75rem ${tokens.layout.edge} max(1rem, env(safe-area-inset-bottom))`,
+  flexShrink: 0,
   color: color.subtle,
   fontSize: tokens.size.utility,
   "@media": {
     "(max-width: 520px)": {
-      paddingBottom: tokens.space.medium,
       gap: tokens.space.small,
       fontSize: "0.8125rem",
     },
@@ -170,27 +180,10 @@ export const playTop = style({
   gap: tokens.space.medium,
   fontSize: tokens.size.utility,
 });
-export const playCaption = style({
-  background: color.paper,
-  position: "fixed",
-  bottom: tokens.layout.edge,
-  left: tokens.layout.edge,
-  right: tokens.layout.edge,
-  display: "flex",
-  justifyContent: "space-between",
-  gap: tokens.space.medium,
-  fontSize: tokens.size.utility,
-  color: color.secondary,
-});
-
-export const playKeyHint = style({
-  whiteSpace: "nowrap",
-  "@media": { "(max-width: 520px)": { display: "none" } },
-});
-
 export const terminalEmulator = style({
   width: "100%",
-  height: "clamp(22rem, 48svh, 36rem)",
+  flex: 1,
+  minHeight: 0,
   outline: "none",
 });
 globalStyle(`${terminalEmulator} .xterm`, { padding: 0 });

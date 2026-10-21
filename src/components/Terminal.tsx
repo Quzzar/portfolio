@@ -21,7 +21,6 @@ import "@xterm/xterm/css/xterm.css";
 
 export type TerminalHandle = { focus: () => void };
 type Props = {
-  onExpanded: (expanded: boolean) => void;
   onPlay: () => void;
   onTheme: () => void;
 };
@@ -67,7 +66,6 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
       term.loadAddon(echo);
       term.open(element);
       term.textarea?.setAttribute("aria-label", "Terminal input");
-      const expand = (value: boolean) => callbacks.current.onExpanded(value);
       let completion: Completion | null = null;
       let generation = 0;
       let completing = Promise.resolve();
@@ -221,11 +219,9 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
             const result = resolveCommand(command);
             if (result.kind === "clear" || result.kind === "exit") {
               term.reset();
-              expand(false);
             } else if (result.kind === "theme") callbacks.current.onTheme();
             else if (result.kind === "play") callbacks.current.onPlay();
             else if (result.kind === "content") {
-              expand(true);
               echo.println("");
               echo.println(terminalResponse(result.view, result.message));
               echo.println("");

@@ -126,9 +126,9 @@ All text uses self-hosted Fira Code Regular, served from `/fonts/fira-code-regul
 
 ## Layout
 
-The initial homepage is a compact, left-aligned text composition within a generous empty field. Its centered content width is capped at (56rem), with (1.5rem) minimum side clearance. The top begins at (clamp(4rem, 14svh, 10rem)); below (520px) it becomes (clamp(3rem, 10svh, 6rem)).
+The initial homepage is a compact, left-aligned text composition within a generous empty field. Its centered content width is capped at (56rem), with (1.5rem) minimum side clearance. The top inset is (clamp(1.5rem, 4dvh, 3rem)). The page occupies the dynamic viewport height; header and footer remain visible while terminal output scrolls internally.
 
-The initial page has no work/about/contact navigation row. The terminal starts (3.6rem) below the identity. The column and header keep the same position and width during typing, completion, and output. The terminal viewport stays at (clamp(22rem, 48svh, 36rem)) and retains output in scrollback.
+The initial page has no work/about/contact navigation row. The terminal starts (clamp(1.5rem, 4dvh, 2.5rem)) below the identity. The column and header keep the same position and width during typing, completion, and output. The terminal fills the available height between the identity and footer and retains output in scrollback.
 
 A flex page holds the footer below the main composition. Social links sit left, the theme control right. Footer edge spacing uses (clamp(1.5rem, 3.45vw, 3.5rem)); mobile utility links wrap as needed.
 
@@ -150,13 +150,13 @@ The user explicitly requested an actual terminal emulator. Use xterm.js with the
 
 Tab completes unique command and filename tokens immediately. For ambiguous tokens it first lists choices without changing the typed token; the next Tab selects the first match. Repeated Tab cycles forward through the original matches; Shift-Tab reverses. Further typing and caret movement end that cycle. Completion preserves following arguments. No external suggestion buttons or ghost text appear. Arrow keys support history and editing, Home/End and Ctrl-A/E move the cursor, Ctrl-C cancels, Ctrl-L clears, and Escape exits terminal focus. Shift-Tab leaves the emulator when completion is inactive. Option-arrow navigation, Option-Backspace, Command-arrow line navigation, Ctrl-W deletion, and Ctrl-B/F/P/N movement/history follow familiar Mac editing conventions. Commands are browser-only and allowlisted. Output uses terminal text with activatable URLs. A block cursor remains visible in both themes.
 
-The emulator loads separately from the homepage and fits its columns to the container, including mobile. Its height stays at (clamp(22rem, 48svh, 36rem)), with 1000 lines of scrollback and a 50-command history. Normal typing appends characters without clearing or reprinting the prompt. Cursor edits redraw the input atomically. A fit operation only runs when rows, columns, or font size change; navigation keys prevent native page scrolling. Themes update the existing instance without resetting its session.
+The emulator loads separately from the homepage and fits its columns to the container, including mobile. Its height flexes with the available viewport space, with 1000 lines of scrollback and a 50-command history. Normal typing appends characters without clearing or reprinting the prompt. Cursor edits redraw the input atomically. A fit operation only runs when rows, columns, or font size change; navigation keys prevent native page scrolling. Themes update the existing instance without resetting its session.
 
 ### Identity columns
 
 Three separately clipped columns start as founder, engineer, designer. Equal-width tracks within (min(100%, 36.5ch)) and a clipped height (1.8em) keep changing words from reflowing the composition. Each word slides vertically and fades over (450ms), using (cubic-bezier(0.16, 1, 0.3, 1)). Each column independently chooses a new random delay between (3000ms) and (6000ms) after every change. All three draw randomly from the same pool, excluding currently displayed and still-exiting words.
 
-The stable accessible identity is “Founder, engineer, designer.” Changing visual words are hidden from assistive technology. Each word is centered within its column. There is no manual pause control, as explicitly requested by the user. Motion stops for reduced motion, offscreen content, expanded terminal content, and the hidden page.
+The stable accessible identity is “Founder, engineer, designer.” Changing visual words are hidden from assistive technology. Each word is centered within its column. There is no manual pause control, as explicitly requested by the user. Motion stops for reduced motion, offscreen content, and the hidden page. Terminal output never pauses identity motion.
 
 ### Footer utilities and theme control
 
@@ -186,4 +186,4 @@ Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. So
 
 ### Terminal workspace
 
-The main column is centered and up to 56rem wide. The terminal reserves `clamp(22rem, 48svh, 36rem)` for readable output; it does not resize while typing. The introduction begins at `clamp(4rem, 14svh, 10rem)` on desktop and `clamp(3rem, 10svh, 6rem)` on mobile so the expanded terminal remains usable above the footer.
+The main column is centered and up to 56rem wide. The page occupies `100dvh`, with a top inset of `clamp(1.5rem, 4dvh, 3rem)`. The terminal fills remaining space between the header and footer with no fixed minimum height; output scrolls inside it. Typing and output do not change page geometry. Help lists command names only. Other responses contain factual text, file names, or links without greetings, encouragement, or interaction instructions.

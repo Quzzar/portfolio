@@ -32,8 +32,8 @@ export const tokens = {
   layout: {
     width: "56rem",
     edge: "clamp(1.5rem, 3.45vw, 3.5rem)",
-    top: "clamp(4rem, 14svh, 10rem)",
-    mobileTop: "clamp(3rem, 10svh, 6rem)",
+    top: "clamp(1.5rem, 4dvh, 3rem)",
+    mobileTop: "clamp(1.5rem, 4dvh, 3rem)",
   },
 } as const;
 
