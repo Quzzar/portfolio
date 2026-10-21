@@ -27,7 +27,6 @@ export const tokens = {
     word: 0.45,
     wordMin: 3000,
     wordMax: 6000,
-    brush: 2200,
     ease: [0.16, 1, 0.3, 1] as const,
   },
   layout: {
@@ -107,6 +106,7 @@ globalStyle("::view-transition-old(root)", { zIndex: 1 });
 globalStyle("::view-transition-new(root)", {
   zIndex: 2,
   maskImage: "var(--theme-brush-mask)",
-  maskSize: "100% 100%",
+  maskSize: "cover",
+  maskPosition: "center",
   maskRepeat: "no-repeat",
 });

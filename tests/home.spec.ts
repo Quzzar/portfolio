@@ -156,7 +156,7 @@ test("paint slathers partial patches over the complete opposite theme in both di
         .getPropertyValue("--theme-brush-mask")
         .includes("data:image/png"),
     );
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(1000);
     await page.screenshot({
       path: `.impeccable/review/slather-${next}-${test.info().project.name}.png`,
     });
@@ -543,7 +543,7 @@ test("failed brush download reports the error and allows retry", async ({
   page,
 }) => {
   await terminal(page);
-  await page.route("**/brushes/*.png", (route) => route.abort());
+  await page.route("**/brushes/*.mp4", (route) => route.abort());
   await page.getByRole("button", { name: "Use dark theme" }).click();
   await expect(page.getByRole("alert")).toHaveText(
     "Brush could not load. Try again.",
@@ -552,7 +552,7 @@ test("failed brush download reports the error and allows retry", async ({
     page.getByRole("button", { name: "Use dark theme" }),
   ).toBeEnabled();
   await expect(page.locator('[data-theme="light"]')).toBeVisible();
-  await page.unroute("**/brushes/*.png");
+  await page.unroute("**/brushes/*.mp4");
   await page.getByRole("button", { name: "Use dark theme" }).click();
   await expect(
     page.getByRole("button", { name: "Use light theme" }),
