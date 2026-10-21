@@ -218,7 +218,8 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
             if (!command.trim()) continue;
             const result = resolveCommand(command);
             if (result.kind === "clear" || result.kind === "exit") {
-              term.reset();
+              // Erase after queued input redraws so the submitted command cannot reappear.
+              term.write("\x1b[2J\x1b[3J\x1b[H");
             } else if (result.kind === "theme") callbacks.current.onTheme();
             else if (result.kind === "play") callbacks.current.onPlay();
             else if (result.kind === "content") {

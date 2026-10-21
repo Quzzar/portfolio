@@ -489,3 +489,49 @@ test("identity keeps changing after terminal output", async ({ page }) => {
   }
   expect(changed).toEqual([true, true, true]);
 });
+
+test("clear removes the submitted command and all earlier output", async ({
+  page,
+}) => {
+  const input = await terminal(page);
+  await command(page, "about");
+  await expect(screen(page)).toContainText("System design. Product design.");
+  await command(page, "clear");
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+  await expect(screen(page)).toHaveText(/^\s*visitor@aaron ~ %\s*$/);
+  await input.pressSequentially("contact");
+  await input.press("Enter");
+  await expect(screen(page)).toContainText("contact@aaroncassar.com");
+  await command(page, "work");
+  await expect(screen(page)).toContainText("More on GitHub");
+  await command(page, "work");
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+  await command(page, "clear");
+  await expect(screen(page)).toHaveText(/^\s*visitor@aaron ~ %\s*$/);
+  await expect(page.locator(".xterm-rows > div").first()).toHaveText(
+    /^visitor@aaron ~ %\s*$/,
+  );
+  await page.locator('[data-ready="true"]').hover();
+  await page.mouse.wheel(0, -1000);
+  await expect(screen(page)).toHaveText(/^\s*visitor@aaron ~ %\s*$/);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
+  await page.screenshot({
+    path: `.impeccable/review/cleared-terminal-${test.info().project.name}.png`,
+    fullPage: true,
+  });
+});
