@@ -81,11 +81,6 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
         await echo.whenReady();
         if (disposed || revision !== generation) return;
         if (completion) {
-          if (!completion.listed) {
-            completion.listed = true;
-            await echo.showCompletions(completion.choices);
-            return;
-          }
           completion.index =
             (completion.index + direction + completion.choices.length) %
             completion.choices.length;
@@ -98,17 +93,16 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
         if (!next) return;
         if (next.choices.length === 1) {
           const value =
-            next.before + next.common + (next.after.startsWith(" ") ? "" : " ");
+            next.before +
+            next.choices[0] +
+            (next.after.startsWith(" ") ? "" : " ");
           echo.updateLine(value + next.after, value.length);
         } else {
           completion = next;
-          const value = next.before + next.common;
-          const expanded = value !== echo.getLine().slice(0, echo.getCursor());
+          next.index = 0;
+          const value = next.before + next.choices[0];
           echo.updateLine(value + next.after, value.length);
-          if (!expanded) {
-            next.listed = true;
-            await echo.showCompletions(next.choices);
-          }
+          await echo.showCompletions(next.choices);
         }
       }
       term.attachCustomKeyEventHandler((event) => {

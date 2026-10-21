@@ -72,8 +72,10 @@ test("terminal Tab completes and prints ambiguous matches inside the terminal", 
   await expect(screen(page)).toContainText("about.txt");
   await expect(screen(page)).toContainText("work.txt");
   await expect(screen(page)).toContainText("contact.txt");
-  await input.pressSequentially("ab");
+  await expect(currentLine(page)).toContainText("% cat about.txt");
   await input.press("Tab");
+  await expect(currentLine(page)).toContainText("% cat contact.txt");
+  await input.press("Shift+Tab");
   await expect(currentLine(page)).toContainText("% cat about.txt");
   await input.press("Enter");
   await expect(screen(page)).toContainText("worlds.");
@@ -287,7 +289,7 @@ test("the final slather covers the viewport without a cleanup fade", async ({
   }
 });
 
-test("Mac-style completion expands a prefix then cycles forward and backward", async ({
+test("Tab inserts a complete match immediately then cycles forward and backward", async ({
   page,
 }) => {
   const input = await terminal(page);
@@ -298,17 +300,16 @@ test("Mac-style completion expands a prefix then cycles forward and backward", a
     .boundingBox();
   await input.pressSequentially("he");
   await input.press("Tab");
-  await expect(currentLine(page)).toContainText("% hel");
-  await expect(screen(page)).not.toContainText("hello");
-  await input.press("Tab");
-  await expect(currentLine(page)).toContainText("% hel");
+  await expect(currentLine(page)).toContainText("% hello");
   await expect(screen(page)).toContainText("hello");
   await expect(screen(page)).toContainText("help");
   await input.press("Tab");
-  await expect(currentLine(page)).toContainText("% hello");
-  await input.press("Tab");
   await expect(currentLine(page)).toContainText("% help");
   await input.press("Shift+Tab");
+  await expect(currentLine(page)).toContainText("% hello");
+  await input.press("Shift+Tab");
+  await expect(currentLine(page)).toContainText("% help");
+  await input.press("Tab");
   await expect(currentLine(page)).toContainText("% hello");
   expect(await host.boundingBox()).toEqual(box);
   expect(
@@ -381,4 +382,25 @@ test("typing never clears the prompt or changes the terminal geometry", async ({
     true,
   );
   expect(await host.boundingBox()).toEqual(before);
+});
+
+test("terminal has room to read output without moving the prompt layout", async ({
+  page,
+}) => {
+  await terminal(page);
+  const host = page.locator('[data-ready="true"]');
+  const box = await host.boundingBox();
+  expect(box?.height).toBeGreaterThanOrEqual(352);
+  if (test.info().project.name === "desktop")
+    expect(box?.width).toBeGreaterThanOrEqual(850);
+  await command(page, "help");
+  if (test.info().project.name === "desktop") {
+    await expect(screen(page)).toContainText("work      Things");
+    await expect(screen(page)).toContainText("Curious? Try ls -a.");
+  }
+  expect(await host.boundingBox()).toEqual(box);
+  await page.screenshot({
+    path: `.impeccable/review/roomier-terminal-${test.info().project.name}.png`,
+    fullPage: true,
+  });
 });

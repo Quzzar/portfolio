@@ -30,10 +30,10 @@ export const tokens = {
     ease: [0.16, 1, 0.3, 1] as const,
   },
   layout: {
-    width: "32.5rem",
+    width: "56rem",
     edge: "clamp(1.5rem, 3.45vw, 3.5rem)",
-    top: "34.1svh",
-    mobileTop: "22svh",
+    top: "clamp(4rem, 14svh, 10rem)",
+    mobileTop: "clamp(3rem, 10svh, 6rem)",
   },
 } as const;
 

@@ -13,9 +13,7 @@ export type Completion = {
   before: string;
   after: string;
   choices: string[];
-  common: string;
   index: number;
-  listed: boolean;
 };
 
 /** The shell layer completes the token at the caret, preserving the rest of the line. */
@@ -35,15 +33,10 @@ export function completeToken(line: string, cursor: number): Completion | null {
           : [];
   const choices = pool.filter((word) => word.startsWith(token));
   if (!choices.length) return null;
-  let common = choices[0] ?? "";
-  for (const choice of choices)
-    while (!choice.startsWith(common)) common = common.slice(0, -1);
   return {
     before: line.slice(0, start),
     after: line.slice(cursor + right.length),
     choices,
-    common,
     index: -1,
-    listed: false,
   };
 }
