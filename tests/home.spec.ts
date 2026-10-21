@@ -139,37 +139,6 @@ test("terminal commands, history, resize, interruption, and playground work", as
   await expect(input).not.toBeFocused();
 });
 
-test("paint slathers partial patches over the complete opposite theme in both directions", async ({
-  page,
-}) => {
-  await terminal(page);
-  await command(page, "about");
-  await expect(screen(page)).toContainText("System design. Product design.");
-  for (const [next, after] of [
-    ["dark", "light"],
-    ["light", "dark"],
-  ]) {
-    await page.getByRole("button", { name: `Use ${next} theme` }).click();
-    await expect(page.locator(`[data-theme="${next}"]`)).toBeVisible();
-    await page.waitForFunction(() =>
-      document.documentElement.style
-        .getPropertyValue("--theme-brush-mask")
-        .includes("data:image/png"),
-    );
-    await page.waitForTimeout(1000);
-    await page.screenshot({
-      path: `.impeccable/review/slather-${next}-${test.info().project.name}.png`,
-    });
-    await expect(
-      page.getByRole("button", { name: `Use ${after} theme` }),
-    ).toBeEnabled();
-    await expect(screen(page)).toContainText("System design. Product design.");
-  }
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.getByRole("button", { name: "Use dark theme" }).click();
-  await expect(page.locator('[data-theme="dark"]')).toBeVisible();
-  await expect(page.locator('[data-painting="true"]')).toHaveCount(0);
-});
 test("identity columns change independently without shifting and reduced motion stays still", async ({
   page,
 }) => {
@@ -261,39 +230,6 @@ test("identity columns change independently without shifting and reduced motion 
   await expect(
     page.getByRole("button", { name: "Pause changing words" }),
   ).toHaveCount(0);
-});
-
-test("the final slather covers the viewport without a cleanup fade", async ({
-  page,
-}) => {
-  await terminal(page);
-  await page.evaluate(() => {
-    const root = document.documentElement;
-    new MutationObserver(() => {
-      const mask = root.style.getPropertyValue("--theme-brush-mask");
-      if (mask) root.dataset.lastMask = mask;
-    }).observe(root, { attributes: true, attributeFilter: ["style"] });
-  });
-  await page.getByRole("button", { name: "Use dark theme" }).click();
-  await expect(
-    page.getByRole("button", { name: "Use light theme" }),
-  ).toBeEnabled();
-  const coverage = await page.evaluate(async () => {
-    const image = new Image();
-    image.src = document.documentElement.dataset.lastMask!.slice(5, -2);
-    await image.decode();
-    const canvas = document.createElement("canvas");
-    canvas.width = 240;
-    canvas.height = 240;
-    const context = canvas.getContext("2d")!;
-    context.drawImage(image, 0, 0, 240, 240);
-    const pixels = context.getImageData(0, 0, 240, 240).data;
-    let covered = 0;
-    for (let index = 3; index < pixels.length; index += 4)
-      if ((pixels[index] ?? 0) >= 250) covered++;
-    return covered / (240 * 240);
-  });
-  expect(coverage).toBeGreaterThan(0.999);
 });
 
 test("Tab lists choices then cycles forward and backward", async ({ page }) => {
@@ -537,25 +473,4 @@ test("clear removes the submitted command and all earlier output", async ({
     path: `.impeccable/review/cleared-terminal-${test.info().project.name}.png`,
     fullPage: true,
   });
-});
-
-test("failed brush download reports the error and allows retry", async ({
-  page,
-}) => {
-  await terminal(page);
-  await page.route("**/brushes/*.mp4", (route) => route.abort());
-  await page.getByRole("button", { name: "Use dark theme" }).click();
-  await expect(page.getByRole("alert")).toHaveText(
-    "Brush could not load. Try again.",
-  );
-  await expect(
-    page.getByRole("button", { name: "Use dark theme" }),
-  ).toBeEnabled();
-  await expect(page.locator('[data-theme="light"]')).toBeVisible();
-  await page.unroute("**/brushes/*.mp4");
-  await page.getByRole("button", { name: "Use dark theme" }).click();
-  await expect(
-    page.getByRole("button", { name: "Use light theme" }),
-  ).toBeEnabled();
-  await expect(page.getByRole("alert")).toHaveCount(0);
 });

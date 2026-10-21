@@ -204,9 +204,9 @@
         "purpose": "Independent random delays and a shared pool without visible duplicates; hidden/offscreen content or reduced motion stops cycling."
       },
       {
-        "name": "theme-brush",
-        "value": "1600ms fractional slather",
-        "purpose": "Short independently angled brush daubs reveal complete destination UI in patches; full final coverage with no cleanup fade."
+        "name": "theme-territory",
+        "value": "11.5s battle + 1.2s surrender",
+        "purpose": "Resource-driven territory simulation seeded at the theme trigger; factories and troops reveal the winning palette. Incoming theme can lose. Reduced motion switches immediately."
       }
     ],
     "breakpoints": [
