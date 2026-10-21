@@ -83,8 +83,8 @@ export async function createBrushPainting(width: number, height: number) {
 
   // Inspect the actual painted alpha, then brush only lanes containing uncovered pixels.
   const touchups: Stamp[][] = [];
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
   for (let column = 0; column < columns; column++) {
-    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     let top = canvas.height;
     let bottom = -1;
     const left = Math.floor(column * lane * scale);
@@ -113,7 +113,6 @@ export async function createBrushPainting(width: number, height: number) {
       true,
     );
     touchups.push(marks);
-    marks.forEach(drawStamp);
   }
   touchups.forEach((marks, pass) => {
     marks.forEach((stamp, index) => {
