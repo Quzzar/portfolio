@@ -116,7 +116,7 @@ export function createTerritoryBattle(
               settling += BATTLE.tick;
               // Several layers per tick clear disconnected enclaves within the settling budget.
               const layers = Math.ceil(
-                (Math.max(simulation.columns, simulation.rows) * BATTLE.tick) /
+                ((simulation.columns + simulation.rows) * BATTLE.tick) /
                   BATTLE.settleSeconds,
               );
               for (let i = 0; i < layers; i++) simulation.settle();
