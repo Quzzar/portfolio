@@ -106,6 +106,7 @@ globalStyle("::view-transition-old(root)", { zIndex: 1 });
 globalStyle("::view-transition-new(root)", {
   zIndex: 2,
   maskImage: "var(--theme-brush-mask)",
-  maskSize: "100% 100%",
+  maskSize: "cover",
+  maskPosition: "center",
   maskRepeat: "no-repeat",
 });
