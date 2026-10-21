@@ -11,3 +11,5 @@ The centered content area is up to 56rem wide, giving the desktop terminal rough
 `patches/xterm-readline@1.3.1.patch` adds a typed cursor getter, cursor-preserving line replacement, a completion-list method, a prompt-ready barrier, and draft restoration when returning from history. This small API patch keeps prompt reanchoring inside the readline implementation rather than reaching into its private state from React. Bun applies it during frozen installs. Reassess the patch when upgrading the pinned addon.
 
 Regression coverage checks every sampled animation frame for the persistent prompt, unchanged geometry while typing/editing, forward/reverse cycling, completion before trailing arguments, Mac editing keys, interruption, clearing, mobile resize, and preservation across theme changes.
+
+`clear` and `exit` queue an erase-display, erase-scrollback, and cursor-home sequence before the next prompt. Do not call synchronous `term.reset()` here: pending input redraws can repaint the submitted command after the reset. Command history remains available through the arrow keys.
