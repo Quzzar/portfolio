@@ -26,48 +26,102 @@ export async function createBrushPainting(width: number, height: number) {
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Brush mask canvas unavailable");
   const stamps: Stamp[] = [];
-  const cell = Math.min(240, width / 2);
-  const columns = Math.ceil(width / cell);
-  const rows = Math.ceil(height / cell);
-  const positions = Array.from({ length: columns * rows }, (_, index) => ({
-    x: ((index % columns) + 0.5) * (width / columns),
-    y: (Math.floor(index / columns) + 0.5) * (height / rows),
-    order: Math.random(),
-  })).sort((a, b) => a.order - b.order);
-  positions.forEach((position, index) => {
-    const angle = Math.random() * Math.PI * 2;
-    const start = (index / positions.length) * 0.56;
-    for (let step = 0; step < 12; step++) {
-      const distance = (step / 11 - 0.5) * cell * 0.9;
-      stamps.push({
-        x: position.x + Math.cos(angle) * distance,
-        y: position.y + Math.sin(angle) * distance,
-        angle: angle + Math.PI / 2,
-        size: cell * (1.3 + Math.sin((step / 11) * Math.PI) * 0.25),
-        at: start + (step / 11) * 0.16,
-        loaded: false,
-      });
-    }
-  });
-  // A second pass uses the scanned loaded brush, never a solid rectangle or fade.
-  // Its overlapping opaque centers cover the gaps left by the dry first pass.
-  const finishCell = cell * 0.55;
-  const finishColumns = Math.ceil(width / finishCell) + 1;
-  const finishRows = Math.ceil(height / finishCell) + 1;
-  for (let row = 0; row < finishRows; row++) {
-    for (let column = 0; column < finishColumns; column++) {
-      const order =
-        row * finishColumns + (row % 2 ? finishColumns - column - 1 : column);
-      stamps.push({
-        x: column * finishCell,
-        y: row * finishCell,
-        size: cell * 2.8,
-        angle: (Math.random() - 0.5) * 0.6,
-        at: 0.65 + (order / (finishColumns * finishRows - 1)) * 0.35,
-        loaded: true,
-      });
-    }
+  const columns = Math.max(2, Math.ceil(width / 220));
+  const lane = width / columns;
+  const size = lane * 1.65;
+
+  function drawStamp(stamp: Stamp): void {
+    const image = brushImages[stamp.loaded ? 1 : 0];
+    if (!image) throw new Error("Brush texture unavailable");
+    context!.save();
+    context!.translate(stamp.x * scale, stamp.y * scale);
+    context!.rotate(stamp.angle);
+    const pixels = stamp.size * scale;
+    context!.drawImage(image, -pixels / 2, -pixels / 2, pixels, pixels);
+    context!.restore();
   }
+
+  function stroke(
+    x: number,
+    from: number,
+    to: number,
+    brushSize: number,
+    loaded: boolean,
+  ): Stamp[] {
+    const tilt = (Math.random() - 0.5) * 0.07;
+    const steps = Math.ceil(Math.abs(to - from) / (brushSize * 0.045));
+    return Array.from({ length: steps + 1 }, (_, step) => {
+      const y = from + (to - from) * (step / steps);
+      return {
+        x: x + (y - height / 2) * Math.tan(tilt),
+        y,
+        size: brushSize,
+        angle: tilt + (to > from ? Math.PI : 0),
+        at: 0,
+        loaded,
+      };
+    });
+  }
+
+  // Adjacent, alternating passes follow a hand painting up, down, up, down.
+  for (let column = 0; column < columns; column++) {
+    const top = -size * 0.5;
+    const bottom = height + size * 0.5;
+    const marks = stroke(
+      lane * (column + 0.5),
+      column % 2 ? top : bottom,
+      column % 2 ? bottom : top,
+      size,
+      false,
+    );
+    marks.forEach((stamp, index) => {
+      stamp.at = ((column + index / marks.length) / columns) * 0.78;
+      stamps.push(stamp);
+      drawStamp(stamp);
+    });
+  }
+
+  // Inspect the actual painted alpha, then brush only lanes containing uncovered pixels.
+  const touchups: Stamp[][] = [];
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  for (let column = 0; column < columns; column++) {
+    let top = canvas.height;
+    let bottom = -1;
+    const left = Math.floor(column * lane * scale);
+    const right = Math.min(
+      canvas.width,
+      Math.ceil((column + 1) * lane * scale),
+    );
+    for (let y = 0; y < canvas.height; y++) {
+      for (let x = left; x < right; x++) {
+        if ((pixels[(y * canvas.width + x) * 4 + 3] ?? 0) < 250) {
+          top = Math.min(top, y);
+          bottom = y;
+          break;
+        }
+      }
+    }
+    if (bottom < top) continue;
+    const brushSize = lane * 3.2;
+    const from = top / scale - brushSize * 0.4;
+    const to = bottom / scale + brushSize * 0.4;
+    const marks = stroke(
+      lane * (column + 0.5),
+      column % 2 ? from : to,
+      column % 2 ? to : from,
+      brushSize,
+      true,
+    );
+    touchups.push(marks);
+  }
+  touchups.forEach((marks, pass) => {
+    marks.forEach((stamp, index) => {
+      stamp.at =
+        0.78 + ((pass + index / marks.length) / touchups.length) * 0.22;
+      stamps.push(stamp);
+    });
+  });
+  context.clearRect(0, 0, canvas.width, canvas.height);
   stamps.sort((a, b) => a.at - b.at);
   let cursor = 0;
   let mask = `url("${canvas.toDataURL()}")`;
@@ -76,14 +130,7 @@ export async function createBrushPainting(width: number, height: number) {
     while (cursor < stamps.length) {
       const stamp = stamps[cursor];
       if (!stamp || stamp.at > progress) break;
-      const image = brushImages[stamp.loaded ? 1 : 0];
-      if (!image) throw new Error("Brush texture unavailable");
-      context.save();
-      context.translate(stamp.x * scale, stamp.y * scale);
-      context.rotate(stamp.angle);
-      const size = stamp.size * scale;
-      context.drawImage(image, -size / 2, -size / 2, size, size);
-      context.restore();
+      drawStamp(stamp);
       cursor++;
     }
     if (cursor !== previous) mask = `url("${canvas.toDataURL()}")`;
