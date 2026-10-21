@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-21T19:52:14.559048+00:00",
+  "title": "Design System: Aaron Cassar",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0469 247.84)",
+          "oklch(26% 0.0469 247.84)",
+          "oklch(38% 0.0469 247.84)",
+          "oklch(49% 0.0469 247.84)",
+          "oklch(61% 0.0469 247.84)",
+          "oklch(72% 0.0469 247.84)",
+          "oklch(84% 0.0469 247.84)",
+          "oklch(95% 0.0469 247.84)"
+        ]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0343 248.52)",
+          "oklch(26% 0.0343 248.52)",
+          "oklch(38% 0.0343 248.52)",
+          "oklch(49% 0.0343 248.52)",
+          "oklch(61% 0.0343 248.52)",
+          "oklch(72% 0.0343 248.52)",
+          "oklch(84% 0.0343 248.52)",
+          "oklch(95% 0.0343 248.52)"
+        ]
+      },
+      "subtle": {
+        "role": "secondary",
+        "displayName": "Subtle",
+        "tonalRamp": [
+          "oklch(15% 0.0292 244.77)",
+          "oklch(26% 0.0292 244.77)",
+          "oklch(38% 0.0292 244.77)",
+          "oklch(49% 0.0292 244.77)",
+          "oklch(61% 0.0292 244.77)",
+          "oklch(72% 0.0292 244.77)",
+          "oklch(84% 0.0292 244.77)",
+          "oklch(95% 0.0292 244.77)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "tonalRamp": [
+          "oklch(15% 0.0028 84.56)",
+          "oklch(26% 0.0028 84.56)",
+          "oklch(38% 0.0028 84.56)",
+          "oklch(49% 0.0028 84.56)",
+          "oklch(61% 0.0028 84.56)",
+          "oklch(72% 0.0028 84.56)",
+          "oklch(84% 0.0028 84.56)",
+          "oklch(95% 0.0028 84.56)"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Focus",
+        "tonalRamp": [
+          "oklch(15% 0.1645 261.13)",
+          "oklch(26% 0.1645 261.13)",
+          "oklch(38% 0.1645 261.13)",
+          "oklch(49% 0.1645 261.13)",
+          "oklch(61% 0.1645 261.13)",
+          "oklch(72% 0.1645 261.13)",
+          "oklch(84% 0.1645 261.13)",
+          "oklch(95% 0.1645 261.13)"
+        ]
+      },
+      "selection": {
+        "role": "neutral",
+        "displayName": "Selection",
+        "tonalRamp": [
+          "oklch(15% 0.0174 248.02)",
+          "oklch(26% 0.0174 248.02)",
+          "oklch(38% 0.0174 248.02)",
+          "oklch(49% 0.0174 248.02)",
+          "oklch(61% 0.0174 248.02)",
+          "oklch(72% 0.0174 248.02)",
+          "oklch(84% 0.0174 248.02)",
+          "oklch(95% 0.0174 248.02)"
+        ]
+      },
+      "dark-ink": {
+        "role": "primary",
+        "displayName": "Dark Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0104 247.94)",
+          "oklch(26% 0.0104 247.94)",
+          "oklch(38% 0.0104 247.94)",
+          "oklch(49% 0.0104 247.94)",
+          "oklch(61% 0.0104 247.94)",
+          "oklch(72% 0.0104 247.94)",
+          "oklch(84% 0.0104 247.94)",
+          "oklch(95% 0.0104 247.94)"
+        ]
+      },
+      "dark-secondary": {
+        "role": "secondary",
+        "displayName": "Dark Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0205 245.70)",
+          "oklch(26% 0.0205 245.70)",
+          "oklch(38% 0.0205 245.70)",
+          "oklch(49% 0.0205 245.70)",
+          "oklch(61% 0.0205 245.70)",
+          "oklch(72% 0.0205 245.70)",
+          "oklch(84% 0.0205 245.70)",
+          "oklch(95% 0.0205 245.70)"
+        ]
+      },
+      "dark-subtle": {
+        "role": "secondary",
+        "displayName": "Dark Subtle",
+        "tonalRamp": [
+          "oklch(15% 0.0248 246.16)",
+          "oklch(26% 0.0248 246.16)",
+          "oklch(38% 0.0248 246.16)",
+          "oklch(49% 0.0248 246.16)",
+          "oklch(61% 0.0248 246.16)",
+          "oklch(72% 0.0248 246.16)",
+          "oklch(84% 0.0248 246.16)",
+          "oklch(95% 0.0248 246.16)"
+        ]
+      },
+      "dark-paper": {
+        "role": "neutral",
+        "displayName": "Dark Paper",
+        "tonalRamp": [
+          "oklch(15% 0.0173 248.63)",
+          "oklch(26% 0.0173 248.63)",
+          "oklch(38% 0.0173 248.63)",
+          "oklch(49% 0.0173 248.63)",
+          "oklch(61% 0.0173 248.63)",
+          "oklch(72% 0.0173 248.63)",
+          "oklch(84% 0.0173 248.63)",
+          "oklch(95% 0.0173 248.63)"
+        ]
+      },
+      "dark-focus": {
+        "role": "primary",
+        "displayName": "Dark Focus",
+        "tonalRamp": [
+          "oklch(15% 0.1175 261.56)",
+          "oklch(26% 0.1175 261.56)",
+          "oklch(38% 0.1175 261.56)",
+          "oklch(49% 0.1175 261.56)",
+          "oklch(61% 0.1175 261.56)",
+          "oklch(72% 0.1175 261.56)",
+          "oklch(84% 0.1175 261.56)",
+          "oklch(95% 0.1175 261.56)"
+        ]
+      },
+      "dark-selection": {
+        "role": "neutral",
+        "displayName": "Dark Selection",
+        "tonalRamp": [
+          "oklch(15% 0.0476 246.92)",
+          "oklch(26% 0.0476 246.92)",
+          "oklch(38% 0.0476 246.92)",
+          "oklch(49% 0.0476 246.92)",
+          "oklch(61% 0.0476 246.92)",
+          "oklch(72% 0.0476 246.92)",
+          "oklch(84% 0.0476 246.92)",
+          "oklch(95% 0.0476 246.92)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "name": {
+        "displayName": "Name",
+        "purpose": "The personal name only."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Identity words and page text."
+      },
+      "command": {
+        "displayName": "Command",
+        "purpose": "Primary text actions and prompt."
+      },
+      "utility": {
+        "displayName": "Utility",
+        "purpose": "Directory, hint, transcript, and footer."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "word",
+        "value": "450ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Clipped word entrance and exit."
+      },
+      {
+        "name": "identity-cycle",
+        "value": "4800ms / 6500ms / 8200ms",
+        "purpose": "Independent column intervals; pause or reduced motion stops cycling."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "column-center",
+        "value": "800px"
+      },
+      {
+        "name": "mobile",
+        "value": "520px"
+      },
+      {
+        "name": "ascii-small",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Text command navigation",
+      "kind": "nav",
+      "refersTo": "text-action",
+      "description": "Direct access to the same content exposed by commands.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Explore\"><button>work</button><button>about</button><button>contact</button></nav>",
+      "css": ".ds-nav{display:flex;gap:2rem}.ds-nav button{font-family:\"Fira Code\",monospace;font-weight:400;border:0;background:transparent;color:#536475;padding:.3rem 0;min-height:2.75rem;cursor:pointer;font-size:1.25rem;}.ds-nav button:hover{color:#12283c;text-decoration:underline;text-underline-offset:.3em}.ds-nav button:focus-visible{outline:2px solid #285ec0;outline-offset:6px;border-radius:2px;}"
+    },
+    {
+      "name": "Terminal input",
+      "kind": "input",
+      "refersTo": "terminal-input",
+      "description": "Borderless prompt with an actual labeled input.",
+      "html": "<label class=\"ds-prompt\">visitor@aaron ~ % <input aria-label=\"Terminal command\" autocomplete=\"off\" spellcheck=\"false\"></label><p class=\"ds-hint\">try \u201chelp\u201d, or just say hello.</p>",
+      "css": ".ds-prompt{font-family:\"Fira Code\",monospace;font-weight:400;display:flex;align-items:baseline;gap:.75rem;color:#12283c;font-size:1.25rem}.ds-prompt input{font-family:\"Fira Code\",monospace;font-weight:400;width:100%;min-width:0;min-height:2rem;padding:0;border:0;border-radius:0;background:transparent;color:#12283c;font-size:inherit;caret-color:#12283c}.ds-prompt input:focus-visible{outline:none;box-shadow:0 1px 0 #285ec0}.ds-hint{font-family:\"Fira Code\",monospace;font-weight:400;font-size:.9375rem;color:#60707e;margin:.25rem 0 0}"
+    },
+    {
+      "name": "Identity columns",
+      "kind": "custom",
+      "refersTo": "identity-columns",
+      "description": "Static preview of the three independently changing clipped words.",
+      "html": "<div class=\"ds-identities\" aria-label=\"Founder, engineer, designer.\"><span aria-hidden=\"true\">founder.</span><span aria-hidden=\"true\">engineer.</span><span aria-hidden=\"true\">designer.</span></div>",
+      "css": ".ds-identities{font-family:\"Fira Code\",monospace;font-weight:400;display:grid;grid-template-columns:8.7ch 10.8ch 9.5ch;gap:.75rem;color:#536475;font-size:1.125rem;line-height:1.6}.ds-identities span{height:1.8em;overflow:hidden;white-space:nowrap}@media(max-width:520px){.ds-identities{font-size:.9375rem;gap:.25rem}}"
+    },
+    {
+      "name": "Utility link",
+      "kind": "custom",
+      "refersTo": "utility-link",
+      "description": "Quiet external destination with a small outline arrow.",
+      "html": "<a class=\"ds-link\" href=\"https://github.com/Quzzar\">GitHub <svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a>",
+      "css": ".ds-link{font-family:\"Fira Code\",monospace;font-weight:400;display:inline-flex;align-items:center;gap:.35rem;min-height:2.75rem;color:#60707e;font-size:.9375rem;text-decoration:none}.ds-link:hover{color:#12283c;text-decoration:underline;text-underline-offset:.3em}.ds-link:focus-visible{outline:2px solid #285ec0;outline-offset:6px;border-radius:2px;}"
+    },
+    {
+      "name": "Theme control",
+      "kind": "button",
+      "refersTo": "theme-control",
+      "description": "Unframed outline icon with an accessible target and name.",
+      "html": "<button class=\"ds-theme\" aria-label=\"Use dark theme\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42\"/></svg></button>",
+      "css": ".ds-theme{font-family:\"Fira Code\",monospace;font-weight:400;border:0;background:transparent;color:#536475;padding:.3rem 0;min-height:2.75rem;cursor:pointer;font-size:1.25rem;display:inline-flex;align-items:center;justify-content:center;min-width:2.75rem;padding:0}.ds-theme:hover{color:#12283c}.ds-theme:focus-visible{outline:2px solid #285ec0;outline-offset:6px;border-radius:2px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "A quiet page with a secret terminal",
+    "overview": "A compact personal introduction typeset like a live text program on a light sheet. Self-hosted monospace, blue-black ink, steel text, and generous whitespace establish the approved quiet, coder-like character.\n\nThe visible prompt is a working browser terminal. Three independently changing identity words add restrained motion; the monochrome ASCII field remains a discovery behind a command. Interaction supplies the surprise without adding desktop-window decoration.",
+    "keyCharacteristics": [
+      "One self-hosted monospace family with modest size changes.",
+      "Paper and ink, with steel supporting text and explicit keyboard focus.",
+      "Compact text groups surrounded by generous whitespace.",
+      "Independent identity motion with pause and reduced-motion controls.",
+      "Text actions and a real prompt instead of interface chrome."
+    ],
+    "rules": [
+      {
+        "name": "The Semantic Ink Rule",
+        "body": "Use ink for the name, prompt, and actionable output; use secondary for supporting content and subtle for utilities. Focus and selection colors serve interaction only.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Face Rule",
+        "body": "Use Fira Code throughout, with regular weight and size, spacing, and tone establishing hierarchy. Disable ligatures so command text stays literal.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "Keep the homepage flat. Whitespace, text color, and ordering supply hierarchy; the input focus underline supplies state rather than elevation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the semantic palette roles together when switching themes.",
+      "Do keep text actions keyboard accessible with visible focus.",
+      "Do keep founder, engineer, designer as the initial and stable accessible identity.",
+      "Do preserve independent word timing, pause controls, and reduced-motion behavior.",
+      "Do keep terminal output readable as semantic text and genuine links."
+    ],
+    "donts": [
+      "Don't add cards, window chrome, or decorative shadows to this homepage.",
+      "Don't enlarge the name into an oversized marketing headline.",
+      "Don't replace the approved identity with the superseded software-engineer subtitle.",
+      "Don't expose the ASCII field as decoration in the first viewport.",
+      "Don't disguise arbitrary code execution as a terminal command."
+    ]
+  }
+}
