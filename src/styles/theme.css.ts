@@ -24,8 +24,8 @@ export const tokens = {
   motion: {
     fast: 0.15,
     word: 0.45,
-    pause: 4800,
-    stagger: 1700,
+    wordMin: 3000,
+    wordMax: 6000,
     brush: 1250,
     ease: [0.16, 1, 0.3, 1] as const,
   },

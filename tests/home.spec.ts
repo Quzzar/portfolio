@@ -5,8 +5,8 @@ test("theme changes paint in both directions and respect reduced motion", async 
 }) => {
   await page.goto("/");
   await page.evaluate(() => document.fonts.ready);
-  await page.getByRole("button", { name: "about", exact: true }).click();
   const input = page.getByRole("textbox", { name: "Terminal command" });
+  await input.fill("about");
   await input.press("Enter");
   const output = page.getByRole("log");
   const before = await output.innerText();
@@ -80,18 +80,10 @@ test("the real homepage ships with working local assets and accessible identity"
     "Resume",
     "LinkedIn",
   ]);
-  await page
-    .getByRole("navigation")
-    .getByRole("button", { name: "about", exact: true })
-    .click();
+  await expect(page.getByRole("navigation")).toHaveCount(0);
   await expect(
     page.getByRole("textbox", { name: "Terminal command" }),
-  ).toHaveValue("about");
-  await expect(
-    page.getByRole("textbox", { name: "Terminal command" }),
-  ).toBeFocused();
-  await expect(page.getByRole("log")).toHaveCount(0);
-  await page.getByRole("textbox", { name: "Terminal command" }).press("Escape");
+  ).toHaveValue("");
   expect(resume.headers()["content-type"]).toContain("pdf");
   expect(failures).toEqual([]);
   await page.evaluate(() => document.fonts.ready);
@@ -135,15 +127,15 @@ test("commands, errors, completion, history, clear and clickable alternatives wo
   await input.press("ArrowDown");
   await input.press("ArrowDown");
   await expect(input).toHaveValue("");
-  await page
-    .getByRole("navigation", { name: "Explore" })
-    .getByRole("button", { name: "work", exact: true })
-    .click();
-  await expect(input).toHaveValue("work");
-  await expect(input).toBeFocused();
+  await input.fill("wor");
+  await expect(
+    page.getByRole("group", { name: "Command completions" }),
+  ).toContainText("work");
   await expect(
     page.getByRole("link", { name: "Wanderer’s Guide" }),
   ).toHaveCount(0);
+  await input.press("ArrowRight");
+  await expect(input).toHaveValue("work");
   await input.press("Enter");
   await expect(
     page.getByRole("link", { name: "Wanderer’s Guide" }),
@@ -162,6 +154,8 @@ test("hidden play field returns to the previous transcript and theme works", asy
   await input.fill("ls -a");
   await input.press("Enter");
   await page.getByRole("button", { name: "./play", exact: true }).click();
+  await expect(input).toHaveValue("play");
+  await input.press("Enter");
   await expect(
     page.getByRole("main", { name: "Interactive ASCII playground" }),
   ).toBeVisible();
@@ -193,11 +187,51 @@ test("hidden play field returns to the previous transcript and theme works", asy
 test("identity columns change independently without shifting and reduced motion stays still", async ({
   page,
 }) => {
+  const start = new Date("2026-10-21T12:00:00Z");
+  await page.clock.install({ time: start });
+  await page.addInitScript(() => {
+    let seed = 42;
+    Math.random = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+  });
+  if (test.info().project.name === "mobile")
+    await page.setViewportSize({ width: 320, height: 740 });
   await page.goto("/");
   const header = page.locator("header");
+  const columns = page.locator("[data-identity-column]");
+  await page.evaluate(() => document.fonts.ready);
   const initial = await header.boundingBox();
-  await expect(header).toContainText("founder.");
-  await expect(header).toContainText("builder.", { timeout: 7500 });
+  await page.clock.pauseAt(
+    new Date(await page.evaluate(() => Date.now() + 10000)),
+  );
+  let previous = await columns.evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("data-word")),
+  );
+  const changes: number[][] = [[], [], []];
+  for (let elapsed = 500; elapsed <= 24000; elapsed += 500) {
+    await page.clock.runFor(500);
+    const words = await columns.evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute("data-word")),
+    );
+    expect(new Set(words).size).toBe(3);
+    words.forEach((word, column) => {
+      if (word !== previous[column]) changes[column]?.push(elapsed);
+    });
+    previous = words;
+  }
+  changes.forEach((times) => {
+    expect(times.length).toBeGreaterThanOrEqual(4);
+    for (let index = 1; index < times.length; index++) {
+      const interval = (times[index] ?? 0) - (times[index - 1] ?? 0);
+      expect(interval).toBeGreaterThanOrEqual(3000);
+      expect(interval).toBeLessThanOrEqual(6000);
+    }
+  });
+  expect(changes[0]).not.toEqual(changes[1]);
+  expect(changes[1]).not.toEqual(changes[2]);
+  await page.clock.resume();
   const after = await header.boundingBox();
   expect(after?.height).toBe(initial?.height);
   await expect(
@@ -222,6 +256,17 @@ test("identity columns change independently without shifting and reduced motion 
       }),
     );
   expect(centered).toBe(true);
+  const fits = await columns.evaluateAll((nodes) =>
+    nodes.every((node) => {
+      const box = node.getBoundingClientRect();
+      return [...node.querySelectorAll("span")].every((span) => {
+        const range = document.createRange();
+        range.selectNodeContents(span);
+        return range.getBoundingClientRect().width <= box.width;
+      });
+    }),
+  );
+  expect(fits).toBe(true);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.reload();
   await expect(header).toContainText("founder.");
@@ -230,4 +275,52 @@ test("identity columns change independently without shifting and reduced motion 
   await expect(
     page.getByRole("button", { name: "Pause changing words" }),
   ).toHaveCount(0);
+});
+
+test("terminal offers cycling completion, file commands, editing, and keyboard escape", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const input = page.getByRole("textbox", { name: "Terminal command" });
+  await input.fill("c");
+  const options = page.getByRole("group", { name: "Command completions" });
+  await expect(options).toContainText("contact");
+  await expect(options).toContainText("clear");
+  await page.screenshot({
+    path: `.impeccable/review/completion-${test.info().project.name}.png`,
+  });
+  await input.press("Tab");
+  await expect(input).toHaveValue("contact");
+  await input.press("Tab");
+  await expect(input).toHaveValue("clear");
+  await input.press("Shift+Tab");
+  await expect(input).toHaveValue("contact");
+  await input.press("Enter");
+  await expect(page.getByRole("log")).toContainText("contact@aaroncassar.com");
+  await input.fill("cat a");
+  await input.press("Tab");
+  await expect(input).toHaveValue("cat about.txt");
+  await input.press("Enter");
+  await expect(page.getByRole("log")).toContainText("I’m Aaron.");
+  await input.fill("hello world");
+  await input.press("Control+w");
+  await expect(input).toHaveValue("hello ");
+  await input.press("Control+a");
+  await input.press("Control+k");
+  await expect(input).toHaveValue("");
+  await input.fill("draft");
+  await input.press("ArrowUp");
+  await expect(input).toHaveValue("cat about.txt");
+  await input.press("ArrowDown");
+  await expect(input).toHaveValue("draft");
+  await input.press("Control+c");
+  await expect(input).toHaveValue("");
+  await input.press("Tab");
+  await expect(options).toContainText("help");
+  await input.press("Escape");
+  await expect(options).toHaveCount(0);
+  await expect(input).not.toBeFocused();
+  await input.fill("help");
+  await input.press("Tab");
+  await expect(input).not.toBeFocused();
 });

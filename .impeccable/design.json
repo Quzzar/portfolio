@@ -200,8 +200,8 @@
       },
       {
         "name": "identity-cycle",
-        "value": "4800ms / 6500ms / 8200ms",
-        "purpose": "Independent column intervals; hidden/offscreen content or reduced motion stops cycling."
+        "value": "3000–6000ms independently rescheduled",
+        "purpose": "Independent random delays and a shared pool without visible duplicates; hidden/offscreen content or reduced motion stops cycling."
       },
       {
         "name": "theme-brush",
@@ -226,19 +226,11 @@
   },
   "components": [
     {
-      "name": "Text command navigation",
-      "kind": "nav",
-      "refersTo": "text-action",
-      "description": "Fill and focus the command input; Enter runs the suggested command.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Explore\"><button>work</button><button>about</button><button>contact</button></nav>",
-      "css": ".ds-nav{display:flex;gap:2rem}.ds-nav button{font-family:\"Fira Code\",monospace;font-weight:400;border:0;background:transparent;color:#536475;padding:.3rem 0;min-height:2.75rem;cursor:pointer;font-size:1.25rem;}.ds-nav button:hover{color:#12283c;text-decoration:underline;text-underline-offset:.3em}.ds-nav button:focus-visible{outline:2px solid #285ec0;outline-offset:6px;border-radius:2px;}"
-    },
-    {
       "name": "Terminal input",
       "kind": "input",
       "refersTo": "terminal-input",
-      "description": "Borderless prompt with an actual labeled input.",
-      "html": "<label class=\"ds-prompt\">visitor@aaron ~ % <input aria-label=\"Terminal command\" autocomplete=\"off\" spellcheck=\"false\"></label><p class=\"ds-hint\">try \u201chelp\u201d, or just say hello.</p>",
+      "description": "Native borderless input with inline completion, matching command options, Tab cycling, history, and shell-style editing. Commands execute only with Enter.",
+      "html": "<label class=\"ds-prompt\">visitor@aaron ~ % <input aria-label=\"Terminal command\" autocomplete=\"off\" spellcheck=\"false\"></label><p class=\"ds-hint\">try “help”, or just say hello.</p>",
       "css": ".ds-prompt{font-family:\"Fira Code\",monospace;font-weight:400;display:flex;align-items:baseline;gap:.75rem;color:#12283c;font-size:1.25rem}.ds-prompt input{font-family:\"Fira Code\",monospace;font-weight:400;width:100%;min-width:0;min-height:2rem;padding:0;border:0;border-radius:0;background:transparent;color:#12283c;font-size:inherit;caret-color:#12283c}.ds-prompt input:focus-visible{outline:none;box-shadow:0 1px 0 #285ec0}.ds-hint{font-family:\"Fira Code\",monospace;font-weight:400;font-size:.9375rem;color:#60707e;margin:.25rem 0 0}"
     },
     {
@@ -247,7 +239,7 @@
       "refersTo": "identity-columns",
       "description": "Static preview of the three independently changing clipped words.",
       "html": "<div class=\"ds-identities\" aria-label=\"Founder, engineer, designer.\"><span aria-hidden=\"true\">founder.</span><span aria-hidden=\"true\">engineer.</span><span aria-hidden=\"true\">designer.</span></div>",
-      "css": ".ds-identities{font-family:\"Fira Code\",monospace;font-weight:400;display:grid;grid-template-columns:9.2ch 11.2ch 9.5ch;gap:.75rem;color:#536475;font-size:1.125rem;line-height:1.6}.ds-identities span{text-align:center;height:1.8em;overflow:hidden;white-space:nowrap}@media(max-width:520px){.ds-identities{font-size:.9375rem;gap:.25rem}}"
+      "css": ".ds-identities{font-family:\"Fira Code\",monospace;font-weight:400;display:grid;grid-template-columns:repeat(3,1fr);max-width:36.5ch;gap:.75rem;color:#536475;font-size:1.125rem;line-height:1.6}.ds-identities span{text-align:center;height:1.8em;overflow:hidden;white-space:nowrap}@media(max-width:520px){.ds-identities{font-size:.9375rem;gap:.25rem}}"
     },
     {
       "name": "Utility link",
