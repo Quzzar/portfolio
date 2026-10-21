@@ -99,9 +99,6 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
           echo.updateLine(value + next.after, value.length);
         } else {
           completion = next;
-          next.index = 0;
-          const value = next.before + next.choices[0];
-          echo.updateLine(value + next.after, value.length);
           await echo.showCompletions(next.choices);
         }
       }
