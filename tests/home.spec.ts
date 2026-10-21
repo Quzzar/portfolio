@@ -1,189 +1,162 @@
 import { test, expect } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { brushMask, createBrushStrokes } from "../src/lib/paint-brush";
 
-test("theme changes paint in both directions and respect reduced motion", async ({
-  page,
-}) => {
+const screen = (page: Page) => page.locator(".xterm-rows");
+async function terminal(page: Page) {
   await page.goto("/");
-  await page.evaluate(() => document.fonts.ready);
-  const input = page.getByRole("textbox", { name: "Terminal command" });
-  await input.fill("about");
+  await expect(page.locator('[data-ready="true"]')).toBeAttached();
+  const input = page.getByRole("textbox", { name: "Terminal input" });
+  await input.focus();
+  await expect(screen(page)).toContainText("visitor@aaron ~ %");
+  return input;
+}
+async function command(page: Page, value: string) {
+  const input = page.getByRole("textbox", { name: "Terminal input" });
+  await input.pressSequentially(value);
   await input.press("Enter");
-  const output = page.getByRole("log");
-  const before = await output.innerText();
-  const painting = page.locator('[data-painting="true"]');
-  for (const [from, to] of [
-    ["dark", "light"],
-    ["light", "dark"],
-  ]) {
-    await page.getByRole("button", { name: `Use ${from} theme` }).click();
-    await expect(painting).toBeAttached();
-    // The complete destination UI already exists while the mask paints it in.
-    await expect(page.locator(`[data-theme="${from}"]`)).toBeVisible();
-    await page.waitForFunction(() =>
-      document.documentElement.style
-        .getPropertyValue("--theme-brush-mask")
-        .includes("%3Cpath"),
-    );
-    await page.waitForTimeout(400);
-    await page.screenshot({
-      path: `.impeccable/review/brush-${from}-${test.info().project.name}.png`,
-    });
-    await expect(
-      page.getByRole("button", { name: `Use ${to} theme` }),
-    ).toBeEnabled();
-    expect(await output.innerText()).toBe(before);
-    await expect(input).toHaveValue("");
-  }
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.getByRole("button", { name: "Use dark theme" }).click();
-  await expect(page.locator('[data-theme="dark"]')).toBeVisible();
-  await expect(painting).toHaveCount(0);
-  expect(
-    await page.evaluate(() =>
-      document.documentElement.style.getPropertyValue("--theme-brush-mask"),
-    ),
-  ).toBe("");
-});
+}
 
-test("the real homepage ships with working local assets and accessible identity", async ({
+test("homepage ships a terminal emulator, assets, and no form navigation", async ({
   page,
 }) => {
-  const failures: string[] = [];
-  page.on("pageerror", (error) => failures.push(error.message));
-  page.on("response", (response) => {
-    if (
-      response.status() >= 400 &&
-      response.url().startsWith("http://localhost")
-    )
-      failures.push(response.url());
-  });
-  await page.goto("/");
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await terminal(page);
   await expect(page).toHaveTitle("Aaron Cassar");
   await expect(
     page.getByRole("heading", { name: "Aaron Cassar" }),
   ).toBeVisible();
-  await expect(
-    page.getByText("Founder, engineer, designer.", { exact: true }),
-  ).toBeAttached();
-  await expect(
-    page.getByRole("link", { name: "Resume", exact: true }),
-  ).toHaveAttribute("href", "/resume/Resume.pdf");
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
-  ).toBe(true);
-  const resume = await page.request.get("/resume/Resume.pdf");
-  expect(resume.status()).toBe(200);
+  await expect(page.locator("input, form")).toHaveCount(0);
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  await expect(page.locator(".xterm-cursor-block")).toBeAttached();
   await expect(page.locator("footer a")).toHaveText([
     "GitHub",
     "Resume",
     "LinkedIn",
   ]);
-  await expect(page.getByRole("navigation")).toHaveCount(0);
-  await expect(
-    page.getByRole("textbox", { name: "Terminal command" }),
-  ).toHaveValue("");
+  const resume = await page.request.get("/resume/Resume.pdf");
+  expect(resume.status()).toBe(200);
   expect(resume.headers()["content-type"]).toContain("pdf");
-  expect(failures).toEqual([]);
-  await page.evaluate(() => document.fonts.ready);
+  expect(errors).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
   await page.screenshot({
-    path: `.impeccable/review/${test.info().project.name}.png`,
+    path: `.impeccable/review/emulator-${test.info().project.name}.png`,
     fullPage: true,
-    animations: "disabled",
   });
-  if (test.info().project.name === "desktop") {
-    await page.setViewportSize({ width: 2560, height: 1440 });
-    await page.screenshot({
-      path: ".impeccable/review/user-2560.png",
-      fullPage: true,
-      animations: "disabled",
-    });
-  }
 });
 
-test("commands, errors, completion, history, clear and clickable alternatives work", async ({
+test("terminal Tab completes and prints ambiguous matches inside the terminal", async ({
   page,
 }) => {
-  await page.goto("/");
-  const input = page.getByRole("textbox", { name: "Terminal command" });
-  await input.fill("wor");
+  const input = await terminal(page);
+  await input.pressSequentially("ab");
   await input.press("Tab");
-  await expect(input).toHaveValue("work");
-  await input.fill("help");
+  await expect(screen(page)).toContainText("% about ");
   await input.press("Enter");
-  await expect(page.getByRole("log")).toContainText(
-    "Things I’ve put into the world.",
-  );
-  await input.fill("<script>alert(1)</script>");
+  await expect(screen(page)).toContainText("worlds.");
+  await input.pressSequentially("cat ");
+  await input.press("Tab");
+  await expect(screen(page)).toContainText("about.txt");
+  await expect(screen(page)).toContainText("work.txt");
+  await expect(screen(page)).toContainText("contact.txt");
+  await input.pressSequentially("ab");
+  await input.press("Tab");
+  await expect(screen(page)).toContainText("% cat about.txt");
   await input.press("Enter");
-  await expect(page.getByRole("log")).toContainText(
-    "Command not found: <script>alert(1)</script>.",
-  );
+  await expect(screen(page)).toContainText("worlds.");
   await input.press("ArrowUp");
-  await expect(input).toHaveValue("<script>alert(1)</script>");
-  await input.press("ArrowUp");
-  await expect(input).toHaveValue("help");
-  await input.press("ArrowDown");
-  await input.press("ArrowDown");
-  await expect(input).toHaveValue("");
-  await input.fill("wor");
-  await expect(
-    page.getByRole("group", { name: "Command completions" }),
-  ).toContainText("work");
-  await expect(
-    page.getByRole("link", { name: "Wanderer’s Guide" }),
-  ).toHaveCount(0);
+  await expect(screen(page)).toContainText("% cat about.txt");
+  await page.screenshot({
+    path: `.impeccable/review/terminal-tab-${test.info().project.name}.png`,
+    fullPage: true,
+  });
+  await input.press("Control+c");
+  await expect(screen(page)).toContainText("^C");
+  await command(page, "clear");
+  await expect(screen(page)).not.toContainText("worlds.");
+  await input.pressSequentially("ct about.txt");
+  await input.press("Home");
   await input.press("ArrowRight");
-  await expect(input).toHaveValue("work");
+  await input.pressSequentially("a");
+  await input.press("End");
   await input.press("Enter");
-  await expect(
-    page.getByRole("link", { name: "Wanderer’s Guide" }),
-  ).toHaveAttribute("href", "https://wanderersguide.app/");
-  await input.fill("clear");
-  await input.press("Enter");
-  await expect(page.getByRole("log")).toHaveCount(0);
-  await expect(input).toBeFocused();
+  await expect(screen(page)).toContainText("worlds.");
 });
 
-test("hidden play field returns to the previous transcript and theme works", async ({
+test("terminal commands, history, resize, interruption, and playground work", async ({
   page,
 }) => {
-  await page.goto("/");
-  const input = page.getByRole("textbox", { name: "Terminal command" });
-  await input.fill("ls -a");
-  await input.press("Enter");
-  await page.getByRole("button", { name: "./play", exact: true }).click();
-  await expect(input).toHaveValue("play");
-  await input.press("Enter");
+  const input = await terminal(page);
+  await command(page, "work");
+  await expect(screen(page)).toContainText("More on GitHub");
+  await command(page, "nonsense");
+  await expect(screen(page)).toContainText("Command not found:");
+  await input.press("ArrowUp");
+  await input.press("Control+c");
+  await command(page, "ls -a");
+  await expect(screen(page)).toContainText("./play");
+  await command(page, "play");
   await expect(
     page.getByRole("main", { name: "Interactive ASCII playground" }),
   ).toBeVisible();
-  await expect(page.getByRole("img", { name: /ASCII waves/ })).toBeVisible();
-  await page.screenshot({
-    path: `.impeccable/review/play-${test.info().project.name}.png`,
-    fullPage: true,
-  });
-  if (test.info().project.name === "mobile")
-    await page.getByRole("button", { name: "back to almost nothing" }).click();
-  else await page.keyboard.press("Escape");
-  await expect(page.getByRole("log")).toContainText("Entirely unnecessary.");
+  await page.getByRole("button", { name: "back to almost nothing" }).click();
   await expect(input).toBeFocused();
-  await page.getByRole("button", { name: "Use dark theme" }).click();
-  await expect(page.locator('[data-theme="dark"]')).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Use light theme" }),
-  ).toBeEnabled();
-  await page.screenshot({
-    path: `.impeccable/review/dark-${test.info().project.name}.png`,
-    fullPage: true,
-    animations: "disabled",
-  });
-  await input.fill("theme");
-  await input.press("Enter");
-  await expect(page.locator('[data-theme="light"]')).toBeVisible();
+  await input.press("Control+l");
+  await expect(screen(page)).not.toContainText("Command not found:");
+  await command(page, "about");
+  await expect(screen(page)).toContainText("worlds.");
+  await page.setViewportSize({ width: 320, height: 740 });
+  await expect
+    .poll(async () => {
+      const width = await page
+        .locator(".xterm-screen")
+        .evaluate((node) => node.getBoundingClientRect().width);
+      const host = await page
+        .locator('[data-ready="true"]')
+        .evaluate((node) => node.getBoundingClientRect().width);
+      return width <= host;
+    })
+    .toBe(true);
+  await input.press("Escape");
+  await expect(input).not.toBeFocused();
 });
 
+test("paint slathers partial patches over the complete opposite theme in both directions", async ({
+  page,
+}) => {
+  await terminal(page);
+  await command(page, "about");
+  await expect(screen(page)).toContainText("worlds.");
+  for (const [next, after] of [
+    ["dark", "light"],
+    ["light", "dark"],
+  ]) {
+    await page.getByRole("button", { name: `Use ${next} theme` }).click();
+    await expect(page.locator(`[data-theme="${next}"]`)).toBeVisible();
+    await page.waitForFunction(() =>
+      document.documentElement.style
+        .getPropertyValue("--theme-brush-mask")
+        .includes("%3Cpath"),
+    );
+    await page.waitForTimeout(350);
+    await page.screenshot({
+      path: `.impeccable/review/slather-${next}-${test.info().project.name}.png`,
+    });
+    await expect(
+      page.getByRole("button", { name: `Use ${after} theme` }),
+    ).toBeEnabled();
+    await expect(screen(page)).toContainText("worlds.");
+  }
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.getByRole("button", { name: "Use dark theme" }).click();
+  await expect(page.locator('[data-theme="dark"]')).toBeVisible();
+  await expect(page.locator('[data-painting="true"]')).toHaveCount(0);
+});
 test("identity columns change independently without shifting and reduced motion stays still", async ({
   page,
 }) => {
@@ -277,50 +250,31 @@ test("identity columns change independently without shifting and reduced motion 
   ).toHaveCount(0);
 });
 
-test("terminal offers cycling completion, file commands, editing, and keyboard escape", async ({
+test("the final slather covers the viewport without a cleanup fade", async ({
   page,
 }) => {
-  await page.goto("/");
-  const input = page.getByRole("textbox", { name: "Terminal command" });
-  await input.fill("c");
-  const options = page.getByRole("group", { name: "Command completions" });
-  await expect(options).toContainText("contact");
-  await expect(options).toContainText("clear");
-  await page.screenshot({
-    path: `.impeccable/review/completion-${test.info().project.name}.png`,
-  });
-  await input.press("Tab");
-  await expect(input).toHaveValue("contact");
-  await input.press("Tab");
-  await expect(input).toHaveValue("clear");
-  await input.press("Shift+Tab");
-  await expect(input).toHaveValue("contact");
-  await input.press("Enter");
-  await expect(page.getByRole("log")).toContainText("contact@aaroncassar.com");
-  await input.fill("cat a");
-  await input.press("Tab");
-  await expect(input).toHaveValue("cat about.txt");
-  await input.press("Enter");
-  await expect(page.getByRole("log")).toContainText("I’m Aaron.");
-  await input.fill("hello world");
-  await input.press("Control+w");
-  await expect(input).toHaveValue("hello ");
-  await input.press("Control+a");
-  await input.press("Control+k");
-  await expect(input).toHaveValue("");
-  await input.fill("draft");
-  await input.press("ArrowUp");
-  await expect(input).toHaveValue("cat about.txt");
-  await input.press("ArrowDown");
-  await expect(input).toHaveValue("draft");
-  await input.press("Control+c");
-  await expect(input).toHaveValue("");
-  await input.press("Tab");
-  await expect(options).toContainText("help");
-  await input.press("Escape");
-  await expect(options).toHaveCount(0);
-  await expect(input).not.toBeFocused();
-  await input.fill("help");
-  await input.press("Tab");
-  await expect(input).not.toBeFocused();
+  const viewport = page.viewportSize() ?? { width: 390, height: 844 };
+  for (let sample = 0; sample < 5; sample++) {
+    const mask = brushMask(
+      createBrushStrokes(viewport.width, viewport.height),
+      1,
+    );
+    const coverage = await page.evaluate(async (mask) => {
+      const image = new Image();
+      image.src = mask.slice(5, -2);
+      await image.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = 240;
+      canvas.height = 240;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Canvas unavailable");
+      context.drawImage(image, 0, 0, 240, 240);
+      const pixels = context.getImageData(0, 0, 240, 240).data;
+      let covered = 0;
+      for (let index = 3; index < pixels.length; index += 4)
+        if ((pixels[index] ?? 0) >= 250) covered++;
+      return covered / (240 * 240);
+    }, mask);
+    expect(coverage).toBeGreaterThan(0.999);
+  }
 });

@@ -1,32 +1,40 @@
-export type BrushStroke = {
-  path: string;
+type Bristle = { offset: number; width: number; lag: number; bend: number };
+type BrushStroke = {
+  x: number;
+  y: number;
+  angle: number;
   length: number;
-  bristles: { offset: number; width: number; lag: number }[];
+  start: number;
+  bristles: Bristle[];
 };
 
-/** Overlapping passes cover a rotated viewport; their order and hand vary each time. */
+/** Short, overlapping daubs slather separate patches, with a fresh hand each toggle. */
 export function createBrushStrokes(width: number, height: number) {
-  const angle = (Math.random() - 0.5) * 40;
-  const radians = (angle * Math.PI) / 180;
-  const span = width * Math.cos(radians) + height * Math.abs(Math.sin(radians));
-  const rise = height * Math.cos(radians) + width * Math.abs(Math.sin(radians));
-  const spacing = rise / 6;
-  const strokes: BrushStroke[] = Array.from({ length: 6 }, (_, index) => {
-    const y = -rise / 2 + spacing * (index + 0.5);
-    const start = -span / 2 - spacing;
-    const end = span / 2 + spacing;
-    const bend = (Math.random() - 0.5) * spacing * 0.2;
-    const reverse = Math.random() > 0.5;
-    return {
-      path: `M ${reverse ? end : start} ${y} Q 0 ${y + bend} ${reverse ? start : end} ${y}`,
-      length: end - start + spacing,
-      bristles: Array.from({ length: 37 }, (_, bristle) => ({
-        offset: ((bristle / 36) * 2 - 1) * spacing * 0.87,
-        width: spacing * (0.052 + Math.random() * 0.018),
-        lag: Math.random() * 0.045,
-      })),
-    };
-  });
+  const columns = Math.max(3, Math.ceil(width / 240));
+  const rows = Math.max(3, Math.ceil(height / 190));
+  const cellWidth = width / columns;
+  const cellHeight = height / rows;
+  const strokes: BrushStroke[] = [];
+  for (let row = 0; row < rows; row++) {
+    for (let column = 0; column < columns; column++) {
+      const angle = (Math.random() - 0.5) * 100;
+      strokes.push({
+        x: cellWidth * (column + 0.5 + (Math.random() - 0.5) * 0.12),
+        y: cellHeight * (row + 0.5 + (Math.random() - 0.5) * 0.12),
+        angle: angle + (Math.random() > 0.5 ? 180 : 0),
+        length: Math.max(cellWidth, cellHeight) * 1.9,
+        start: 0,
+        bristles: Array.from({ length: 29 }, (_, index) => ({
+          offset:
+            ((index / 28) * 2 - 1) * Math.max(cellWidth, cellHeight) * 0.78,
+          width:
+            Math.max(cellWidth, cellHeight) * (0.085 + Math.random() * 0.022),
+          lag: Math.random() * 0.12,
+          bend: (Math.random() - 0.5) * cellHeight * 0.04,
+        })),
+      });
+    }
+  }
   for (let index = strokes.length - 1; index > 0; index--) {
     const target = Math.floor(Math.random() * (index + 1));
     const current = strokes[index];
@@ -36,35 +44,33 @@ export function createBrushStrokes(width: number, height: number) {
       strokes[target] = current;
     }
   }
-  return { strokes, angle, width, height };
+  strokes.forEach((stroke, index) => {
+    stroke.start = (index / (strokes.length - 1)) * 0.8;
+  });
+  return { strokes, width, height };
 }
-
 export type BrushPainting = ReturnType<typeof createBrushStrokes>;
 
-/** Alpha mask reveals the complete new view, including its live text and controls. */
+/** Every mark reveals the destination UI itself, with no painted-color overlay. */
 export function brushMask(painting: BrushPainting, progress: number): string {
-  const { width, height, angle, strokes } = painting;
+  const { width, height, strokes } = painting;
   const paths = strokes
-    .map((stroke, index) => {
-      const local = Math.max(
-        0,
-        Math.min(1, (progress - index * 0.125) / 0.375),
-      );
-      if (local === 0) return "";
+    .map((stroke) => {
+      const local = Math.max(0, Math.min(1, (progress - stroke.start) / 0.2));
+      if (!local) return "";
       const eased = local * local * (3 - 2 * local);
-      const path = (size: number, offset: number, amount: number) =>
-        `<path d="${stroke.path}" transform="translate(0 ${offset})" stroke-width="${size}" stroke-dasharray="${stroke.length}" stroke-dashoffset="${stroke.length * (1 - amount)}"/>`;
-      return stroke.bristles
-        .map((bristle) =>
-          path(
-            bristle.width,
-            bristle.offset,
-            Math.max(0, eased * (1 + bristle.lag) - bristle.lag),
-          ),
-        )
+      const bristles = stroke.bristles
+        .map((bristle) => {
+          const amount = Math.max(0, eased * (1 + bristle.lag) - bristle.lag);
+          if (!amount) return "";
+          const start = -stroke.length / 2;
+          const length = stroke.length * 1.08;
+          return `<path d="M ${start} ${bristle.offset} Q 0 ${bristle.offset + bristle.bend} ${-start} ${bristle.offset}" stroke-width="${bristle.width}" stroke-dasharray="${length}" stroke-dashoffset="${length * (1 - amount)}"/>`;
+        })
         .join("");
+      return `<g transform="translate(${stroke.x} ${stroke.y}) rotate(${stroke.angle})">${bristles}</g>`;
     })
     .join("");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><g transform="translate(${width / 2} ${height / 2}) rotate(${angle})" fill="none" stroke="white" stroke-linecap="round">${paths}</g></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><g fill="none" stroke="white" stroke-linecap="round">${paths}</g></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
