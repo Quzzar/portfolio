@@ -60,17 +60,6 @@ export function Home() {
             <h1 className={styles.name}>Aaron Cassar</h1>
             <IdentityWords isInactive={hasOutput || isPlaying} />
           </header>
-          <nav className={styles.navigation} aria-label="Explore">
-            {["work", "about", "contact"].map((command) => (
-              <button
-                className={styles.textButton}
-                key={command}
-                onClick={() => terminal.current?.fill(command)}
-              >
-                {command}
-              </button>
-            ))}
-          </nav>
           <Terminal
             ref={terminal}
             onExpanded={setHasOutput}

@@ -43,14 +43,17 @@ export const name = style({
 });
 export const identities = style({
   display: "grid",
-  gridTemplateColumns: "9.2ch 11.2ch 9.5ch",
+  gridTemplateColumns: "repeat(3, 1fr)",
   gap: tokens.space.small,
   color: color.secondary,
-  width: "fit-content",
+  width: "100%",
   fontSize: tokens.size.body,
   marginTop: tokens.space.tiny,
   "@media": {
-    "(max-width: 520px)": { fontSize: "0.9375rem", gap: tokens.space.tiny },
+    "(max-width: 520px)": {
+      fontSize: "clamp(0.75rem, 3.8vw, 0.9375rem)",
+      gap: tokens.space.tiny,
+    },
   },
 });
 export const wordColumn = style({
@@ -71,19 +74,13 @@ export const word = style({
 });
 export const identityWrap = style({
   position: "relative",
-  width: "fit-content",
+  width: "min(100%, 36.5ch)",
 });
 export const homeContent = style({
   flex: 1,
   display: "flex",
   flexDirection: "column",
   selectors: { "&[hidden]": { display: "none" } },
-});
-export const navigation = style({
-  display: "flex",
-  gap: "2rem",
-  marginTop: "1rem",
-  fontSize: tokens.size.command,
 });
 export const textButton = style({
   display: "inline-flex",
@@ -118,7 +115,11 @@ export const prompt = style({
   userSelect: "none",
   flexShrink: 0,
 });
-export const inputWrap = style({ position: "relative", flex: 1, minWidth: 0 });
+export const inputWrap = style({
+  position: "relative",
+  flex: 1,
+  minWidth: 0,
+});
 export const input = style({
   display: "block",
   width: "100%",
@@ -285,4 +286,26 @@ export const playCaption = style({
 export const playKeyHint = style({
   whiteSpace: "nowrap",
   "@media": { "(max-width: 520px)": { display: "none" } },
+});
+
+export const ghost = style({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  color: color.subtle,
+  whiteSpace: "pre",
+  width: "100%",
+  overflow: "hidden",
+  pointerEvents: "none",
+  display: "none",
+  selectors: { [`${inputWrap}:focus-within &`]: { display: "block" } },
+});
+export const ghostPrefix = style({ visibility: "hidden" });
+export const completions = style({
+  display: "flex",
+  flexWrap: "wrap",
+  columnGap: tokens.space.medium,
+  rowGap: tokens.space.tiny,
+  marginTop: tokens.space.small,
+  fontSize: tokens.size.utility,
 });
