@@ -23,6 +23,7 @@ export const tokens = {
   },
   motion: {
     fast: 0.15,
+    hover: 0.28,
     word: 0.45,
     wordMin: 3000,
     wordMax: 6000,
