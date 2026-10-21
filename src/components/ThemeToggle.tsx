@@ -23,13 +23,15 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
     const shouldReduceMotion = useReducedMotion();
     const [isChanging, setIsChanging] = useState(false);
     const [hasBrushError, setHasBrushError] = useState(false);
-    const frame = useRef(0);
+    const paintingRef = useRef<Awaited<
+      ReturnType<typeof createBrushPainting>
+    > | null>(null);
     const isRunning = useRef(false);
     const transitionRef = useRef<ViewTransition | null>(null);
 
     useEffect(
       () => () => {
-        cancelAnimationFrame(frame.current);
+        paintingRef.current?.dispose();
         transitionRef.current?.skipTransition();
         document.documentElement.style.removeProperty("--theme-brush-mask");
       },
@@ -48,31 +50,26 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
       const root = document.documentElement;
       setHasBrushError(false);
       try {
-        const paint = await createBrushPainting(
-          window.innerWidth,
-          window.innerHeight,
-        );
-        root.style.setProperty("--theme-brush-mask", paint(0));
+        const painting = await createBrushPainting();
+        paintingRef.current = painting;
+        root.style.setProperty("--theme-brush-mask", painting.initialMask);
         const transition = document.startViewTransition(() => {
           flushSync(() => setTheme(next));
         });
         transitionRef.current = transition;
         await transition.ready;
-        const started = performance.now();
-        function draw(now: number): void {
-          const progress = Math.min(1, (now - started) / tokens.motion.brush);
-          root.style.setProperty("--theme-brush-mask", paint(progress));
-          if (progress < 1) frame.current = requestAnimationFrame(draw);
-          else transition.skipTransition();
-        }
-        frame.current = requestAnimationFrame(draw);
+        await painting.play((mask) => {
+          root.style.setProperty("--theme-brush-mask", mask);
+        });
+        transition.skipTransition();
         await transition.finished;
       } catch (error) {
         console.error("Theme painting failed.", error);
         if (!transitionRef.current) setHasBrushError(true);
         transitionRef.current?.skipTransition();
       } finally {
-        cancelAnimationFrame(frame.current);
+        paintingRef.current?.dispose();
+        paintingRef.current = null;
         root.style.removeProperty("--theme-brush-mask");
         transitionRef.current = null;
         isRunning.current = false;

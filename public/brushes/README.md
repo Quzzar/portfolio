@@ -1,16 +1,23 @@
-# Scanned brush textures
+# Diagonal paint video matte
 
-Author: Dino0040
-Source: https://opengameart.org/content/100-grunge-brushstrokes-and-splatters-set
-Download: https://opengameart.org/sites/default/files/grunge_brushes.zip
-License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+Author: Gam-Ol
+Source: https://pixabay.com/videos/transition-brush-black-white-23325/
+Downloaded media: https://cdn.pixabay.com/video/2019/05/05/23325-334689174_large.mp4
+License: Pixabay Content License, https://pixabay.com/service/license-summary/
 Retrieved: 2026-10-21
 
-Unmodified PNG files from the author's `increased_opacity` directory:
+`diagonal-matte.mp4` is an adapted mask for this website's theme transition. It is
+not offered as a standalone stock download. The source's diagonal paint motion is
+preserved. Its initial blank segment is trimmed, playback is accelerated, resolution
+is reduced, and luminance is remapped to ensure the final painted frame fully covers
+the old theme. The app converts each video frame's luminance to alpha and uses it to
+reveal the destination interface. It makes no third-party requests.
 
-- `brush004.png` is served as `dry-brush.png`.
-- `brush026.png` is served as `loaded-brush.png`.
+Reproduction from the downloaded source:
 
-These are scanned watercolor marks, used as alpha-mask stamps during theme changes.
-Only positions, angles, and timing are generated. No procedural bristles or synthetic
-brush silhouettes are used. Files are self-hosted; the app makes no third-party requests.
+```sh
+ffmpeg -i source.mp4 -vf "trim=start=0.65,setpts=(PTS-STARTPTS)*0.52,scale=960:540,format=gray,lut=y='clip((val-16)*255/150,0,255)',fps=30" -an -c:v libx264 -crf 18 -pix_fmt yuv420p -movflags +faststart diagonal-matte.mp4
+```
+
+The former procedurally moved PNG stamps were rejected: their paths and repeated
+edges looked mechanical. Their code and assets have been removed.
