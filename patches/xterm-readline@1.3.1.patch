@@ -1,0 +1,136 @@
+diff --git a/node_modules/xterm-readline/.bun-tag-234a1d73250d7d74 b/.bun-tag-234a1d73250d7d74
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/xterm-readline/.bun-tag-552beb637e4c45f9 b/.bun-tag-552beb637e4c45f9
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/xterm-readline/.bun-tag-56a48d2f64338a8b b/.bun-tag-56a48d2f64338a8b
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/xterm-readline/.bun-tag-95882a27dd35c996 b/.bun-tag-95882a27dd35c996
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/lib/readline.d.ts b/lib/readline.d.ts
+index 09cc8c890beb77e0e0ba749c673f893f18c200fd..e96d4afcf34fe094c31ceea1cb7ebdc1a8db5bf3 100644
+--- a/lib/readline.d.ts
++++ b/lib/readline.d.ts
+@@ -112,7 +112,10 @@ export declare class Readline implements ITerminalAddon {
+      * @param text - The text to write to the terminal./
+      * @returns
+      */
+-    updateLine(text: string): void;
++    whenReady(): Promise<void>;
++    getCursor(): number;
++    updateLine(text: string, cursor?: number): void;
++    showCompletions(matches: string[]): Promise<void>;
+     /**
+      * Obtain an output interface to this terminal.
+      *
+diff --git a/lib/readline.js b/lib/readline.js
+index 3c9d63a78f59365335292fcc88a3b590b9023a52..c6fcd86ef80f83ab616c896ac1d780ca1e5a566b 100644
+--- a/lib/readline.js
++++ b/lib/readline.js
+@@ -187,8 +187,45 @@ class Readline {
+      * @param text - The text to write to the terminal./
+      * @returns
+      */
+-    updateLine(text) {
+-        return this.state.update(text);
++    whenReady() {
++        return new Promise((resolve) => {
++            const check = () => {
++                if (!this.term || (this.activeRead && !this.printingPrompt)) resolve();
++                else requestAnimationFrame(check);
++            };
++            check();
++        });
++    }
++    getCursor() { return this.state.cursorPosition(); }
++    updateLine(text, cursor = text.length) {
++        this.state.update(text);
++        const back = Array.from(text.slice(cursor)).length;
++        if (back > 0) this.state.moveCursorBack(back);
++    }
++    showCompletions(matches) {
++        return new Promise((resolve) => {
++            const show = () => {
++                if (!this.term || !this.activeRead) { resolve(); return; }
++                if (this.printingPrompt) { requestAnimationFrame(show); return; }
++                const value = this.state.buffer();
++                const cursor = this.state.cursorPosition();
++                const prompt = this.activeRead.prompt;
++                const width = Math.max(...matches.map((match) => match.length)) + 2;
++                const columns = Math.max(1, Math.floor(this.term.cols / width));
++                const lines = [];
++                for (let index = 0; index < matches.length; index += columns) {
++                    lines.push(matches.slice(index, index + columns).map((match) => match.padEnd(width)).join("").trimEnd());
++                }
++                this.state.moveCursorToEnd();
++                this.println("\r\n" + lines.join("\r\n"));
++                this.printPrompt(prompt, (tty) => {
++                    this.state.reanchor(tty);
++                    this.updateLine(value, cursor);
++                    resolve();
++                });
++            };
++            show();
++        });
+     }
+     /**
+      * Obtain an output interface to this terminal.
+diff --git a/lib/state.js b/lib/state.js
+index 525b01b2913146a7e904a9ae1a6c78fe514798e0..eb9bd31903b8e07ae684fc913e6862112bf61ac3 100644
+--- a/lib/state.js
++++ b/lib/state.js
+@@ -57,6 +57,7 @@ class State {
+         this.promptSize = tty.calculatePosition(this.prompt, new Position(0, tty.anchorCol));
+         this.layout = new Layout(this.promptSize);
+     }
++    cursorPosition() { return this.line.pos; }
+     buffer() {
+         return this.line.buffer();
+     }
+@@ -189,19 +190,15 @@ class State {
+         }
+     }
+     moveCursorUp(n) {
+-        if (this.editing) {
+-            if (this.line.moveLineUp(n, this.promptSize.col)) {
+-                this.moveCursor();
+-            }
++        if (this.editing && this.line.moveLineUp(n, this.promptSize.col)) {
++            this.moveCursor();
+             return;
+         }
+         this.previousHistory();
+     }
+     moveCursorDown(n) {
+-        if (this.editing) {
+-            if (this.line.moveLineDown(n, this.promptSize.col)) {
+-                this.moveCursor();
+-            }
++        if (this.editing && this.line.moveLineDown(n, this.promptSize.col)) {
++            this.moveCursor();
+             return;
+         }
+         this.nextHistory();
+@@ -226,9 +223,7 @@ class State {
+         this.refresh();
+     }
+     previousHistory() {
+-        if (this.history.cursor === -1 && this.line.length() > 0) {
+-            return;
+-        }
++        if (this.history.cursor === -1) this.historyDraft = this.line.buffer();
+         const prev = this.history.prev();
+         if (prev !== undefined) {
+             this.update(prev);
+@@ -243,7 +238,7 @@ class State {
+             this.update(next);
+         }
+         else {
+-            this.update("");
++            this.update(this.historyDraft || "");
+         }
+     }
+     moveCursor() {

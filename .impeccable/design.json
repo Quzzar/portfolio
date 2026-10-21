@@ -229,7 +229,7 @@
       "name": "Terminal emulator",
       "kind": "custom",
       "refersTo": "terminal-input",
-      "description": "xterm.js with local-echo, fit, and web-links addons. Tab completion and ambiguous matches live inside the terminal.",
+      "description": "xterm.js with incremental readline, fit, and web-links addons. Common-prefix completion, forward/reverse Tab cycling, and stable geometry follow Mac-style interaction.",
       "html": "<div class=\"ds-terminal\" role=\"img\" aria-label=\"Terminal preview\">visitor@aaron ~ % <span> </span></div>",
       "css": ".ds-terminal{font-family:\"Fira Code\",monospace;color:#12283c;font-size:18px;line-height:1.3}.ds-terminal span{display:inline-block;background:#12283c;width:.6em;height:1.3em;vertical-align:bottom}"
     },

@@ -128,7 +128,7 @@ All text uses self-hosted Fira Code Regular, served from `/fonts/fira-code-regul
 
 The initial homepage is a compact, left-aligned text composition within a generous empty field. Its content width is capped at (32.5rem), with (1.5rem) minimum side clearance. On wide screens the left edge sits at (32.62%) and the top begins at (34.1svh). Below (800px) the column centers horizontally; below (520px) its top becomes (22svh).
 
-The initial page has no work/about/contact navigation row. The terminal starts (3.6rem) below the identity. Once output appears, the column expands to (42rem) and moves toward the top with padding of (clamp(3rem, 9svh, 6rem)). The terminal viewport grows with output to a maximum of min(520px, 50vh), then retains output in scrollback.
+The initial page has no work/about/contact navigation row. The terminal starts (3.6rem) below the identity. The column and header keep the same position and width during typing, completion, and output. The terminal viewport stays at (clamp(14rem, 32svh, 22rem)) and retains output in scrollback.
 
 A flex page holds the footer below the main composition. Social links sit left, the theme control right. Footer edge spacing uses (clamp(1.5rem, 3.45vw, 3.5rem)); mobile utility links wrap as needed.
 
@@ -146,11 +146,11 @@ The page is text-first and borderless. xterm renders the terminal surface and a 
 
 ### Terminal emulator
 
-The user explicitly requested an actual terminal emulator. Use xterm.js with the local-echo controller, fit addon, and web-links addon. The visible shell prompt is `visitor@aaron ~ % `. The emulator owns cursor rendering, selection, wrapped lines, transcript, scrollback, and its accessibility tree. Its hidden textarea captures keyboard/IME input; there is no visible HTML text field or form.
+The user explicitly requested an actual terminal emulator. Use xterm.js with the incremental xterm-readline controller, fit addon, and web-links addon. The visible shell prompt is `visitor@aaron ~ % `. The emulator owns cursor rendering, selection, wrapped lines, transcript, scrollback, and its accessibility tree. Its hidden textarea captures keyboard/IME input; there is no visible HTML text field or form.
 
-Tab completes commands and filename tokens, expands their common prefix, and lists ambiguous matches in terminal output while retaining the line. No external suggestion buttons or ghost text appear. Arrow keys support history and editing, Home/End and Ctrl-A/E move the cursor, Ctrl-C cancels, Ctrl-L clears, and Escape exits terminal focus. Shift-Tab leaves the emulator. Commands are browser-only and allowlisted. Output uses terminal text with activatable URLs. A block cursor remains visible in both themes.
+Tab completes command and filename tokens, expands their common prefix, and lists ambiguous matches in terminal output while retaining the line. Repeated Tab cycles forward through the original matches; Shift-Tab reverses. Further typing and caret movement end that cycle. Completion preserves following arguments. No external suggestion buttons or ghost text appear. Arrow keys support history and editing, Home/End and Ctrl-A/E move the cursor, Ctrl-C cancels, Ctrl-L clears, and Escape exits terminal focus. Shift-Tab leaves the emulator when completion is inactive. Option-arrow navigation, Option-Backspace, Command-arrow line navigation, Ctrl-W deletion, and Ctrl-B/F/P/N movement/history follow familiar Mac editing conventions. Commands are browser-only and allowlisted. Output uses terminal text with activatable URLs. A block cursor remains visible in both themes.
 
-The emulator loads separately from the homepage and fits its columns to the container, including mobile. Its height starts at two rows, grows with output, and caps at min(520px, 50vh), with 1000 lines of scrollback and a 100-command history. Themes update the existing instance without resetting its session.
+The emulator loads separately from the homepage and fits its columns to the container, including mobile. Its height stays at (clamp(14rem, 32svh, 22rem)), with 1000 lines of scrollback and a 50-command history. Normal typing appends characters without clearing or reprinting the prompt. Cursor edits redraw the input atomically. A fit operation only runs when rows, columns, or font size change; navigation keys prevent native page scrolling. Themes update the existing instance without resetting its session.
 
 ### Identity columns
 

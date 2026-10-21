@@ -3,6 +3,10 @@ import type { Page } from "@playwright/test";
 import { brushMask, createBrushStrokes } from "../src/lib/paint-brush";
 
 const screen = (page: Page) => page.locator(".xterm-rows");
+const currentLine = (page: Page) =>
+  page
+    .locator(".xterm-rows > div")
+    .filter({ has: page.locator(".xterm-cursor") });
 async function terminal(page: Page) {
   await page.goto("/");
   await expect(page.locator('[data-ready="true"]')).toBeAttached();
@@ -56,7 +60,7 @@ test("terminal Tab completes and prints ambiguous matches inside the terminal", 
   const input = await terminal(page);
   await input.pressSequentially("ab");
   await input.press("Tab");
-  await expect(screen(page)).toContainText("% about ");
+  await expect(currentLine(page)).toContainText("% about ");
   await input.press("Enter");
   await expect(screen(page)).toContainText("worlds.");
   await input.pressSequentially("cat ");
@@ -66,11 +70,11 @@ test("terminal Tab completes and prints ambiguous matches inside the terminal", 
   await expect(screen(page)).toContainText("contact.txt");
   await input.pressSequentially("ab");
   await input.press("Tab");
-  await expect(screen(page)).toContainText("% cat about.txt");
+  await expect(currentLine(page)).toContainText("% cat about.txt");
   await input.press("Enter");
   await expect(screen(page)).toContainText("worlds.");
   await input.press("ArrowUp");
-  await expect(screen(page)).toContainText("% cat about.txt");
+  await expect(currentLine(page)).toContainText("% cat about.txt");
   await page.screenshot({
     path: `.impeccable/review/terminal-tab-${test.info().project.name}.png`,
     fullPage: true,
@@ -277,4 +281,96 @@ test("the final slather covers the viewport without a cleanup fade", async ({
     }, mask);
     expect(coverage).toBeGreaterThan(0.999);
   }
+});
+
+test("Mac-style completion expands a prefix then cycles forward and backward", async ({
+  page,
+}) => {
+  const input = await terminal(page);
+  const host = page.locator('[data-ready="true"]');
+  const box = await host.boundingBox();
+  const heading = await page
+    .getByRole("heading", { name: "Aaron Cassar" })
+    .boundingBox();
+  await input.pressSequentially("he");
+  await input.press("Tab");
+  await expect(currentLine(page)).toContainText("% hel");
+  await expect(screen(page)).toContainText("hello");
+  await expect(screen(page)).toContainText("help");
+  await input.press("Tab");
+  await expect(currentLine(page)).toContainText("% hello");
+  await input.press("Tab");
+  await expect(currentLine(page)).toContainText("% help");
+  await input.press("Shift+Tab");
+  await expect(currentLine(page)).toContainText("% hello");
+  expect(await host.boundingBox()).toEqual(box);
+  expect(
+    await page.getByRole("heading", { name: "Aaron Cassar" }).boundingBox(),
+  ).toEqual(heading);
+  await page.screenshot({
+    path: `.impeccable/review/mac-completion-${test.info().project.name}.png`,
+  });
+  await input.pressSequentially("x");
+  await expect(currentLine(page)).toContainText("% hellox");
+  await input.press("Backspace");
+  await input.press("Enter");
+  await expect(screen(page)).toContainText("Hello, stranger.");
+  await input.pressSequentially("draft");
+  await input.press("ArrowUp");
+  await expect(currentLine(page)).toContainText("% hello");
+  await input.press("ArrowDown");
+  await expect(currentLine(page)).toContainText("% draft");
+  await input.press("Control+u");
+  await input.pressSequentially("cat ab --flag");
+  await input.press("Home");
+  for (let step = 0; step < 6; step++) await input.press("ArrowRight");
+  await input.press("Tab");
+  await expect(screen(page)).toContainText("% cat about.txt --flag");
+  await input.press("Control+u");
+  await input.pressSequentially("zz");
+  await input.press("Tab");
+  await input.pressSequentially("z");
+  await expect(currentLine(page)).toContainText("% zzz");
+  await input.press("Control+u");
+  await input.pressSequentially("hello world");
+  await input.press("Alt+Backspace");
+  await expect(currentLine(page)).toContainText("% hello ");
+  await input.press("Meta+ArrowLeft");
+  await input.pressSequentially("x");
+  await expect(currentLine(page)).toContainText("% xhello ");
+  await input.press("Meta+ArrowRight");
+  await input.press("Control+w");
+  await input.pressSequentially("about");
+  await expect(currentLine(page)).toContainText("% about");
+});
+
+test("typing never clears the prompt or changes the terminal geometry", async ({
+  page,
+}) => {
+  const input = await terminal(page);
+  const host = page.locator('[data-ready="true"]');
+  const before = await host.boundingBox();
+  const samples = page.evaluate(
+    () =>
+      new Promise<string[]>((resolve) => {
+        const frames: string[] = [];
+        const sample = () => {
+          frames.push(document.querySelector(".xterm-rows")?.textContent ?? "");
+          if (frames.length === 45) resolve(frames);
+          else requestAnimationFrame(sample);
+        };
+        requestAnimationFrame(sample);
+      }),
+  );
+  await input.pressSequentially("about", { delay: 35 });
+  await input.press("ArrowLeft");
+  await input.press("Backspace");
+  await input.pressSequentially("u");
+  await input.press("End");
+  await expect(currentLine(page)).toContainText("% about");
+  const frames = await samples;
+  expect(frames.every((frame) => frame.includes("visitor@aaron ~ %"))).toBe(
+    true,
+  );
+  expect(await host.boundingBox()).toEqual(before);
 });

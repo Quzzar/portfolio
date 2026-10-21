@@ -23,12 +23,6 @@ export const main = style({
     "(max-width: 520px)": { paddingTop: tokens.layout.mobileTop },
   },
 });
-export const expandedMain = style({
-  paddingTop: "clamp(3rem, 9svh, 6rem)",
-  width: `min(${tokens.layout.expanded}, calc(100% - 3rem))`,
-  marginLeft: "max(1.5rem, calc(50% - 20rem))",
-  "@media": { "(max-width: 800px)": { marginInline: "auto" } },
-});
 export const directory = style({
   fontSize: tokens.size.utility,
   color: color.subtle,
@@ -202,7 +196,7 @@ export const playKeyHint = style({
 
 export const terminalEmulator = style({
   width: "100%",
-  height: "3.5rem",
+  height: "clamp(14rem, 32svh, 22rem)",
   outline: "none",
 });
 globalStyle(`${terminalEmulator} .xterm`, { padding: 0 });
