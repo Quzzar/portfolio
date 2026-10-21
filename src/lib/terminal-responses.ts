@@ -33,8 +33,6 @@ export function terminalResponse(view: ContentView, message?: string): string {
       return "about.txt    work.txt    contact.txt";
     case "hidden":
       return "about.txt    work.txt    contact.txt\n\nOne executable: ./play\nEntirely unnecessary.";
-    case "hello":
-      return "Hello, stranger. Glad you found this little corner.\nStay a while. Try help.";
     case "coffee":
       return "   ( (\n    ) )\n  .----.\n  |    |]\n  `----´\n\nOne dependency I can’t seem to remove.";
     case "sudo":
