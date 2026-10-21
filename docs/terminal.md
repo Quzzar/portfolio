@@ -2,7 +2,7 @@
 
 xterm.js owns the visible terminal, selection, block cursor, scrollback, and accessibility tree. xterm-readline owns incremental input, editing, and history. The browser-only command resolver supplies site responses.
 
-`terminal-completion.ts` selects the command or filename token at the caret. A unique match completes with a trailing space. Ambiguous completion selects the first full match immediately and lists the available matches. Further Tab/Shift-Tab cycles through that original match set, wrapping at either end. This intentionally uses immediate menu completion rather than zsh’s shared-prefix expansion stage, following the requested interaction. New input or cursor movement discards that set. Unknown prefixes remain unchanged.
+`terminal-completion.ts` selects the command or filename token at the caret. A unique match completes with a trailing space. Ambiguous completion lists the available matches without modifying the typed token. The next Tab selects the first match; further Tab/Shift-Tab cycles through the original match set and wraps at either end. Unique matches still complete immediately. New input or cursor movement discards that set. Unknown prefixes remain unchanged.
 
 The idle terminal contains only the prompt, with no greeting or persistent keyboard instructions. The legacy `hello` and `hi` commands return help.
 

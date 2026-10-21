@@ -72,6 +72,8 @@ test("terminal Tab completes and prints ambiguous matches inside the terminal", 
   await expect(screen(page)).toContainText("about.txt");
   await expect(screen(page)).toContainText("work.txt");
   await expect(screen(page)).toContainText("contact.txt");
+  await expect(currentLine(page)).toHaveText(/% cat\s*$/);
+  await input.press("Tab");
   await expect(currentLine(page)).toContainText("% cat about.txt");
   await input.press("Tab");
   await expect(currentLine(page)).toContainText("% cat contact.txt");
@@ -289,9 +291,7 @@ test("the final slather covers the viewport without a cleanup fade", async ({
   }
 });
 
-test("Tab inserts a complete match immediately then cycles forward and backward", async ({
-  page,
-}) => {
+test("Tab lists choices then cycles forward and backward", async ({ page }) => {
   const input = await terminal(page);
   const host = page.locator('[data-ready="true"]');
   const box = await host.boundingBox();
@@ -300,9 +300,11 @@ test("Tab inserts a complete match immediately then cycles forward and backward"
     .boundingBox();
   await input.pressSequentially("he");
   await input.press("Tab");
-  await expect(currentLine(page)).toContainText("% hello");
   await expect(screen(page)).toContainText("hello");
   await expect(screen(page)).toContainText("help");
+  await expect(currentLine(page)).toHaveText(/% he\s*$/);
+  await input.press("Tab");
+  await expect(currentLine(page)).toContainText("% hello");
   await input.press("Tab");
   await expect(currentLine(page)).toContainText("% help");
   await input.press("Shift+Tab");
@@ -403,4 +405,29 @@ test("terminal has room to read output without moving the prompt layout", async 
     path: `.impeccable/review/roomier-terminal-${test.info().project.name}.png`,
     fullPage: true,
   });
+});
+
+test("ambiguous Tab lists matches before selecting or cycling", async ({
+  page,
+}) => {
+  const input = await terminal(page);
+  const press = async (key: string) => {
+    await input.press(key);
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
+  };
+  await input.pressSequentially("c");
+  await press("Tab");
+  await expect(screen(page)).toContainText("coffee");
+  await expect(currentLine(page)).toHaveText(/% c\s*$/);
+  for (const choice of ["cat", "clear", "coffee", "contact", "cat"]) {
+    await press("Tab");
+    await expect(currentLine(page)).toHaveText(new RegExp(`% ${choice}\\s*$`));
+  }
+  await press("Shift+Tab");
+  await expect(currentLine(page)).toHaveText(/% contact\s*$/);
 });
