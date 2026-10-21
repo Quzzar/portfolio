@@ -25,6 +25,8 @@ export const tokens = {
     word: 0.45,
     pause: 4800,
     stagger: 1700,
+    brush: 680,
+    brushReveal: 180,
     ease: [0.16, 1, 0.3, 1] as const,
   },
   layout: {

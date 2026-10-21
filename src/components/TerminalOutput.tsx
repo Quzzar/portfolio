@@ -100,7 +100,7 @@ export function TerminalOutput({ view, message, onCommand }: Props) {
         target="_blank"
         rel="noreferrer"
       >
-        Read my résumé
+        Read my resume
         <ArrowUpRight size={14} aria-hidden="true" />
       </a>
     );

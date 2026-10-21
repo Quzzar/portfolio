@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAtom } from "jotai";
-import { ArrowUpRight, Moon, Sun } from "lucide-react";
+import { useAtomValue } from "jotai";
+import { ArrowUpRight } from "lucide-react";
 import { themeAtom } from "../atoms/theme";
 import { AsciiField } from "../components/AsciiField";
 import { IdentityWords } from "../components/IdentityWords";
 import { Terminal } from "../components/Terminal";
 import type { TerminalHandle } from "../components/Terminal";
+import { ThemeToggle } from "../components/ThemeToggle";
+import type { ThemeToggleHandle } from "../components/ThemeToggle";
 import * as styles from "../styles/home.css";
 import { dark, light, LIGHT_PALETTE, DARK_PALETTE } from "../styles/theme.css";
 
 export function Home() {
-  const [theme, setTheme] = useAtom(themeAtom);
+  const theme = useAtomValue(themeAtom);
   const [hasOutput, setHasOutput] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const terminal = useRef<TerminalHandle>(null);
+  const themeToggle = useRef<ThemeToggleHandle>(null);
   const closePlay = useCallback(() => {
     setIsPlaying(false);
     requestAnimationFrame(() => terminal.current?.focus());
@@ -62,7 +65,7 @@ export function Home() {
               <button
                 className={styles.textButton}
                 key={command}
-                onClick={() => terminal.current?.execute(command)}
+                onClick={() => terminal.current?.fill(command)}
               >
                 {command}
               </button>
@@ -72,6 +75,7 @@ export function Home() {
             ref={terminal}
             onExpanded={setHasOutput}
             onPlay={() => setIsPlaying(true)}
+            onTheme={() => themeToggle.current?.toggle()}
           />
         </main>
         <footer className={styles.footer}>
@@ -87,6 +91,15 @@ export function Home() {
             </a>
             <a
               className={styles.socialLink}
+              href="/resume/Resume.pdf"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Resume
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </a>
+            <a
+              className={styles.socialLink}
               href="https://www.linkedin.com/in/quzzar/"
               target="_blank"
               rel="noreferrer"
@@ -94,31 +107,8 @@ export function Home() {
               LinkedIn
               <ArrowUpRight size={14} aria-hidden="true" />
             </a>
-            <a
-              className={styles.socialLink}
-              href="/resume/Resume.pdf"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Résumé
-              <ArrowUpRight size={14} aria-hidden="true" />
-            </a>
           </div>
-          <button
-            className={styles.themeButton}
-            aria-label={
-              theme === "light" ? "Use dark theme" : "Use light theme"
-            }
-            onClick={() =>
-              setTheme((value) => (value === "light" ? "dark" : "light"))
-            }
-          >
-            {theme === "light" ? (
-              <Sun size={22} strokeWidth={1.4} />
-            ) : (
-              <Moon size={22} strokeWidth={1.4} />
-            )}
-          </button>
+          <ThemeToggle ref={themeToggle} />
         </footer>
       </div>
     </div>

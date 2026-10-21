@@ -85,7 +85,7 @@ The visible prompt is a working browser terminal. Three independently changing i
 - One self-hosted monospace family with modest size changes.
 - Paper and ink, with steel supporting text and explicit keyboard focus.
 - Compact text groups surrounded by generous whitespace.
-- Independent identity motion with pause and reduced-motion controls.
+- Independent centered identity motion with reduced-motion support.
 - Text actions and a real prompt instead of interface chrome.
 
 ## Colors
@@ -152,17 +152,17 @@ Quiet lowercase text buttons make work, about, and contact directly discoverable
 
 A genuine labeled input follows `visitor@aaron ~ %`, without a field border or surrounding window. A static block indicates the empty unfocused prompt; focus replaces it with the native caret and a focus underline. Hints sit immediately below in subtle text. Output is stacked semantic text with command markers, lists, and links; errors remain readable text within the same palette.
 
-The browser-only command resolver is allowlisted. History, unique Tab completion, clear, themes, and exit operate on this page. The terminal evaluates neither JavaScript nor operating-system commands.
+Navigation buttons fill and focus the prompt without executing. Enter runs the completed command. The browser-only command resolver is allowlisted. History, unique Tab completion, clear, themes, and exit operate on this page. The terminal evaluates neither JavaScript nor operating-system commands.
 
 ### Identity columns
 
-Three separately clipped columns start as founder, engineer, designer. Fixed tracks (8.7ch, 10.8ch, 9.5ch) and a clipped height (1.8em) keep changing words from reflowing the composition. Each word slides vertically and fades over (450ms), using (cubic-bezier(0.16, 1, 0.3, 1)). Columns cycle at (4800ms), (6500ms), and (8200ms).
+Three separately clipped columns start as founder, engineer, designer. Fixed tracks (9.2ch, 11.2ch, 9.5ch) and a clipped height (1.8em) keep changing words from reflowing the composition. Each word slides vertically and fades over (450ms), using (cubic-bezier(0.16, 1, 0.3, 1)). Columns cycle at (4800ms), (6500ms), and (8200ms).
 
-The stable accessible identity is “Founder, engineer, designer.” Changing visual words are hidden from assistive technology. Pause appears on hover, keyboard focus, or touch devices. Motion stops for reduced motion, offscreen content, expanded terminal content, and the hidden page.
+The stable accessible identity is “Founder, engineer, designer.” Changing visual words are hidden from assistive technology. Each word is centered within its column. There is no manual pause control, as explicitly requested by the user. Motion stops for reduced motion, offscreen content, expanded terminal content, and the hidden page.
 
 ### Footer utilities and theme control
 
-Social links are understated text with small external-link arrows. Hover adds ink and an underline; keyboard focus uses the shared outline. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and swaps the complete semantic palette.
+Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. Social links are understated text with small external-link arrows. Hover adds ink and an underline; keyboard focus uses the shared outline. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and swaps the complete semantic palette through a 680ms diagonal brush stroke and a 180ms reveal. A continuous pigment body and irregular bristled edge keep the wipe clean. The icon rotates and settles. The terminal theme command uses the same transition. Reduced motion switches immediately.
 
 ### Hidden ASCII field
 
@@ -175,7 +175,7 @@ Social links are understated text with small external-link arrows. Hover adds in
 - Do use the semantic palette roles together when switching themes.
 - Do keep text actions keyboard accessible with visible focus.
 - Do keep founder, engineer, designer as the initial and stable accessible identity.
-- Do preserve independent word timing, pause controls, and reduced-motion behavior.
+- Do preserve independent word timing, centered alignment, and reduced-motion behavior.
 - Do keep terminal output readable as semantic text and genuine links.
 
 ### Don't:
