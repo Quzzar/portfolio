@@ -156,7 +156,7 @@ test("paint slathers partial patches over the complete opposite theme in both di
         .getPropertyValue("--theme-brush-mask")
         .includes("data:image/png"),
     );
-    await page.waitForTimeout(350);
+    await page.waitForTimeout(1000);
     await page.screenshot({
       path: `.impeccable/review/slather-${next}-${test.info().project.name}.png`,
     });
