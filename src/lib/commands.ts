@@ -31,19 +31,6 @@ export const COMMANDS = [
   "sudo",
 ] as const;
 
-export const COMPLETIONS = [
-  ...COMMANDS,
-  "projects",
-  "whoami",
-  "email",
-  "cat about.txt",
-  "cat work.txt",
-  "cat contact.txt",
-  "ls -a",
-  "ls -la",
-  "./play",
-] as const;
-
 /** This is an allowlisted browser interaction, never an executable shell. */
 export function resolveCommand(input: string): CommandResult {
   const command = input.trim().toLowerCase().replace(/\s+/g, " ");

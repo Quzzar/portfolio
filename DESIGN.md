@@ -119,7 +119,7 @@ All text uses self-hosted Fira Code Regular, served from `/fonts/fira-code-regul
 - **Name:** the largest role, reserved for the personal name.
 - **Command:** the prompt.
 - **Body:** identity words and default page text.
-- **Utility:** directory, hints, transcript, and footer. Terminal responses use a more open line height (1.8) and paragraphs stop at (58ch).
+- **Utility:** directory, hints, transcript, and footer. The xterm terminal uses 18px type on desktop and 15px on mobile, with its lineHeight option set to 1.3.
 - **Mobile adjustments:** at (520px), identities use (clamp(0.75rem, 3.8vw, 0.9375rem)) so the longest pool word fits even at 320px, the prompt becomes (1.0625rem), and the footer becomes (0.8125rem).
 
 **The One Face Rule.** Use Fira Code throughout, with regular weight and size, spacing, and tone establishing hierarchy. Disable ligatures so command text stays literal.
@@ -128,7 +128,7 @@ All text uses self-hosted Fira Code Regular, served from `/fonts/fira-code-regul
 
 The initial homepage is a compact, left-aligned text composition within a generous empty field. Its content width is capped at (32.5rem), with (1.5rem) minimum side clearance. On wide screens the left edge sits at (32.62%) and the top begins at (34.1svh). Below (800px) the column centers horizontally; below (520px) its top becomes (22svh).
 
-The initial page has no work/about/contact navigation row. The terminal starts (3.6rem) below the identity. Once output appears, the column expands to (42rem) and moves toward the top with padding of (clamp(3rem, 9svh, 6rem)). Transcript groups use the large spacing step; individual rows use the small step.
+The initial page has no work/about/contact navigation row. The terminal starts (3.6rem) below the identity. Once output appears, the column expands to (42rem) and moves toward the top with padding of (clamp(3rem, 9svh, 6rem)). The terminal viewport grows with output to a maximum of min(520px, 50vh), then retains output in scrollback.
 
 A flex page holds the footer below the main composition. Social links sit left, the theme control right. Footer edge spacing uses (clamp(1.5rem, 3.45vw, 3.5rem)); mobile utility links wrap as needed.
 
@@ -140,19 +140,17 @@ No decorative shadows, cards, or raised containers appear. Paper remains continu
 
 ## Shapes
 
-The form language is text-first and borderless. The terminal input is square and transparent. The resting prompt indicator is a small solid rectangle (0.6em by 1.1em). Focus outlines have a slight corner radius and sit outside text controls (2px stroke, 6px offset). Lucide outline icons supply small external-link arrows, theme, pause, play, and back controls.
+The page is text-first and borderless. xterm renders the terminal surface and a solid block cursor without an input underline or field outline. External controls keep their shared focus outlines. Lucide icons supply small external-link arrows, theme, pause, play, and back controls.
 
 ## Components
 
-### Text actions
+### Terminal emulator
 
-Work, about, and contact are typed commands, without a separate navigation row. Transcript suggestions and completion options are transparent utility-size text buttons; selecting one fills the prompt and Enter executes. Hover adds an underline and keyboard focus uses the shared outline.
+The user explicitly requested an actual terminal emulator. Use xterm.js with the local-echo controller, fit addon, and web-links addon. The visible shell prompt is `visitor@aaron ~ % `. The emulator owns cursor rendering, selection, wrapped lines, transcript, scrollback, and its accessibility tree. Its hidden textarea captures keyboard/IME input; there is no visible HTML text field or form.
 
-### Terminal input and transcript
+Tab completes commands and filename tokens, expands their common prefix, and lists ambiguous matches in terminal output while retaining the line. No external suggestion buttons or ghost text appear. Arrow keys support history and editing, Home/End and Ctrl-A/E move the cursor, Ctrl-C cancels, Ctrl-L clears, and Escape exits terminal focus. Shift-Tab leaves the emulator. Commands are browser-only and allowlisted. Output uses terminal text with activatable URLs. A block cursor remains visible in both themes.
 
-A genuine labeled input follows `visitor@aaron ~ %`, without a field border or surrounding window. A static block indicates the empty unfocused prompt; focus replaces it with the native caret and a focus underline. Hints sit immediately below in subtle text. Output is stacked semantic text with command markers, lists, and links; errors remain readable text within the same palette.
-
-A native input supplies selection, touch keyboards, and a caret. Inline ghost text and a wrapping row of matching commands appear while typing. Tab and Shift-Tab cycle matches; Right Arrow accepts the ghost; Enter executes. Empty Tab lists options. Escape clears and leaves the input. History arrows and Ctrl-A/E/U/K/W/C/L support shell-style editing. The browser-only command resolver is allowlisted. Clear, themes, and exit operate on this page. The terminal evaluates neither JavaScript nor operating-system commands.
+The emulator loads separately from the homepage and fits its columns to the container, including mobile. Its height starts at two rows, grows with output, and caps at min(520px, 50vh), with 1000 lines of scrollback and a 100-command history. Themes update the existing instance without resetting its session.
 
 ### Identity columns
 
@@ -162,7 +160,7 @@ The stable accessible identity is “Founder, engineer, designer.” Changing vi
 
 ### Footer utilities and theme control
 
-Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. Social links are understated text with small external-link arrows. Hover adds ink and an underline; keyboard focus uses the shared outline. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and reveals the complete destination theme through six overlapping, randomly ordered brush strokes over 1250ms. Native view snapshots preserve the whole interface: every stroke exposes the destination text, controls, and background together. Closely packed bristles give each pass an irregular edge; direction, angle, and stroke order vary each time. There is no final UI fade. The icon rotates and settles. The terminal theme command uses the same transition. Reduced motion switches immediately.
+Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. Social links are understated text with small external-link arrows. Hover adds ink and an underline; keyboard focus uses the shared outline. The transparent theme button uses a Sun or Moon outline within a minimum (2.75rem) target and reveals the complete destination theme through randomly ordered short brush daubs over 1600ms. Native view snapshots preserve the whole interface: every stroke exposes the destination text, controls, and background together. Individual patches have varying angles, curved bristles, and ragged tips; they cover fractions of the page and overlap into complete coverage. There is no final UI fade. The icon rotates and settles. The terminal theme command uses the same transition. Reduced motion switches immediately.
 
 ### Hidden ASCII field
 
@@ -176,7 +174,7 @@ Footer links are ordered GitHub, Resume, LinkedIn, without accents on Resume. So
 - Do keep text actions keyboard accessible with visible focus.
 - Do keep founder, engineer, designer as the initial and stable accessible identity.
 - Do preserve independent word timing, centered alignment, and reduced-motion behavior.
-- Do keep terminal output readable as semantic text and genuine links.
+- Do keep the xterm session selectable, accessible, and its URLs activatable.
 
 ### Don't:
 

@@ -1,15 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useAtomValue } from "jotai";
 import { ArrowUpRight } from "lucide-react";
 import { themeAtom } from "../atoms/theme";
 import { AsciiField } from "../components/AsciiField";
 import { IdentityWords } from "../components/IdentityWords";
-import { Terminal } from "../components/Terminal";
 import type { TerminalHandle } from "../components/Terminal";
 import { ThemeToggle } from "../components/ThemeToggle";
 import type { ThemeToggleHandle } from "../components/ThemeToggle";
 import * as styles from "../styles/home.css";
 import { dark, light, LIGHT_PALETTE, DARK_PALETTE } from "../styles/theme.css";
+
+const Terminal = lazy(() =>
+  import("../components/Terminal").then((module) => ({
+    default: module.Terminal,
+  })),
+);
 
 export function Home() {
   const theme = useAtomValue(themeAtom);
@@ -35,6 +47,7 @@ export function Home() {
       if (
         event.key === "`" &&
         !(event.target instanceof HTMLInputElement) &&
+        !(event.target instanceof HTMLTextAreaElement) &&
         !isPlaying
       ) {
         event.preventDefault();
@@ -60,12 +73,20 @@ export function Home() {
             <h1 className={styles.name}>Aaron Cassar</h1>
             <IdentityWords isInactive={hasOutput || isPlaying} />
           </header>
-          <Terminal
-            ref={terminal}
-            onExpanded={setHasOutput}
-            onPlay={() => setIsPlaying(true)}
-            onTheme={() => themeToggle.current?.toggle()}
-          />
+          <Suspense
+            fallback={
+              <p className={styles.terminal} role="status">
+                Opening terminal…
+              </p>
+            }
+          >
+            <Terminal
+              ref={terminal}
+              onExpanded={setHasOutput}
+              onPlay={() => setIsPlaying(true)}
+              onTheme={() => themeToggle.current?.toggle()}
+            />
+          </Suspense>
         </main>
         <footer className={styles.footer}>
           <div className={styles.social}>

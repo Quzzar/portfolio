@@ -205,8 +205,8 @@
       },
       {
         "name": "theme-brush",
-        "value": "1250ms overlapping brush strokes",
-        "purpose": "Six randomized bristled strokes mask the complete destination view, including text and controls; no final UI fade. Immediate with reduced motion or without view-transition support."
+        "value": "1600ms fractional slather",
+        "purpose": "Short independently angled brush daubs reveal complete destination UI in patches; full final coverage with no cleanup fade."
       }
     ],
     "breakpoints": [
@@ -226,12 +226,12 @@
   },
   "components": [
     {
-      "name": "Terminal input",
-      "kind": "input",
+      "name": "Terminal emulator",
+      "kind": "custom",
       "refersTo": "terminal-input",
-      "description": "Native borderless input with inline completion, matching command options, Tab cycling, history, and shell-style editing. Commands execute only with Enter.",
-      "html": "<label class=\"ds-prompt\">visitor@aaron ~ % <input aria-label=\"Terminal command\" autocomplete=\"off\" spellcheck=\"false\"></label><p class=\"ds-hint\">try “help”, or just say hello.</p>",
-      "css": ".ds-prompt{font-family:\"Fira Code\",monospace;font-weight:400;display:flex;align-items:baseline;gap:.75rem;color:#12283c;font-size:1.25rem}.ds-prompt input{font-family:\"Fira Code\",monospace;font-weight:400;width:100%;min-width:0;min-height:2rem;padding:0;border:0;border-radius:0;background:transparent;color:#12283c;font-size:inherit;caret-color:#12283c}.ds-prompt input:focus-visible{outline:none;box-shadow:0 1px 0 #285ec0}.ds-hint{font-family:\"Fira Code\",monospace;font-weight:400;font-size:.9375rem;color:#60707e;margin:.25rem 0 0}"
+      "description": "xterm.js with local-echo, fit, and web-links addons. Tab completion and ambiguous matches live inside the terminal.",
+      "html": "<div class=\"ds-terminal\" role=\"img\" aria-label=\"Terminal preview\">visitor@aaron ~ % <span> </span></div>",
+      "css": ".ds-terminal{font-family:\"Fira Code\",monospace;color:#12283c;font-size:18px;line-height:1.3}.ds-terminal span{display:inline-block;background:#12283c;width:.6em;height:1.3em;vertical-align:bottom}"
     },
     {
       "name": "Identity columns",
