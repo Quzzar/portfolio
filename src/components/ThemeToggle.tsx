@@ -10,6 +10,7 @@ import { useAtom } from "jotai";
 import { motion, useReducedMotion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { themeAtom } from "../atoms/theme";
+import { createTerritorySurface } from "../lib/territory-surface";
 import { createTerritoryBattle } from "../lib/territory-renderer";
 import type { Point } from "../lib/territory";
 import { tokens } from "../styles/theme.css";
@@ -30,12 +31,14 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const isRunning = useRef(false);
-    const transitionRef = useRef<ViewTransition | null>(null);
+    const surfaceRef = useRef<ReturnType<typeof createTerritorySurface> | null>(
+      null,
+    );
 
     useEffect(
       () => () => {
         battleRef.current?.dispose();
-        transitionRef.current?.skipTransition();
+        surfaceRef.current?.dispose();
         document.documentElement.style.removeProperty("--theme-territory-mask");
       },
       [],
@@ -44,10 +47,7 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
     async function toggle(origin?: Point): Promise<void> {
       if (isRunning.current) return;
       const next = theme === "light" ? "dark" : "light";
-      if (
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-        !document.startViewTransition
-      ) {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         setTheme(next);
         return;
       }
@@ -66,53 +66,34 @@ export const ThemeToggle = forwardRef<ThemeToggleHandle>(
         };
         canvas.dataset["originX"] = String(seed.x);
         canvas.dataset["originY"] = String(seed.y);
-        const battle = createTerritoryBattle(canvas, seed, next);
+        const battle = createTerritoryBattle(canvas, seed);
         battleRef.current = battle;
         root.style.setProperty("--theme-territory-mask", battle.initialMask);
-        const transition = document.startViewTransition(() => {
-          flushSync(() => setTheme(next));
-        });
-        transitionRef.current = transition;
-        await transition.ready;
+        const source = button.closest<HTMLElement>("[data-theme]");
+        if (!source) throw new Error("Theme page unavailable");
+        const surface = createTerritorySurface(source, next);
+        surfaceRef.current = surface;
+        surface.draw(battle.initialMask);
         const winner = await battle.play((mask) => {
           root.style.setProperty("--theme-territory-mask", mask);
+          surface.draw(mask);
         });
-        if (winner !== 1) flushSync(() => setTheme(theme));
-        transition.skipTransition();
-        await transition.finished;
+        if (winner === 1) flushSync(() => setTheme(next));
       } catch (error) {
         console.error("Theme battle failed.", error);
         setHasBattleError(true);
         flushSync(() => setTheme(theme));
-        transitionRef.current?.skipTransition();
+        surfaceRef.current?.dispose();
       } finally {
         battleRef.current?.dispose();
         battleRef.current = null;
         root.style.removeProperty("--theme-territory-mask");
-        transitionRef.current = null;
+        surfaceRef.current?.dispose();
+        surfaceRef.current = null;
         isRunning.current = false;
         setIsChanging(false);
       }
     }
-
-    useEffect(() => {
-      if (!isChanging) return;
-      // Interaction takes priority over watching the battle; cancellation preserves the current theme.
-      const interrupt = () => battleRef.current?.dispose();
-      const hidden = () => {
-        if (document.hidden) interrupt();
-      };
-      window.addEventListener("keydown", interrupt, true);
-      window.addEventListener("pointerdown", interrupt, true);
-      window.addEventListener("resize", interrupt);
-      document.addEventListener("visibilitychange", hidden);
-      return () => {
-        window.removeEventListener("keydown", interrupt, true);
-        window.removeEventListener("pointerdown", interrupt, true);
-        window.removeEventListener("resize", interrupt);
-        document.removeEventListener("visibilitychange", hidden);
-      };
-    }, [isChanging]);
 
     useImperativeHandle(ref, () => ({ toggle }));
 

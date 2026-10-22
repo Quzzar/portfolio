@@ -33,7 +33,7 @@ test("resource battles can win or lose, reclaim territory, and settle completely
   expect(reversals).toBeGreaterThan(0);
 });
 
-test("button battle starts at the icon, renders armies, and finishes without losing the terminal", async ({
+test("button battle starts at the icon, renders fluid territory, and finishes without losing the terminal", async ({
   page,
 }) => {
   test.setTimeout(25000);
@@ -61,14 +61,14 @@ test("button battle starts at the icon, renders armies, and finishes without los
     4,
   );
   await page.screenshot({
-    path: `.impeccable/review/territory-dark-${test.info().project.name}.png`,
+    path: `.impeccable/review/fluid-dark-${test.info().project.name}.png`,
   });
   await expect(canvas).toHaveAttribute("data-battle", "false", {
     timeout: 16000,
   });
   expect(Date.now() - started).toBeGreaterThanOrEqual(10000);
   expect(Date.now() - started).toBeLessThan(16000);
-  await expect(page.locator("[data-battling]")).toBeEnabled();
+  await expect(page.locator("#root [data-battling]")).toBeEnabled();
   expect(
     await page.evaluate(() =>
       document.documentElement.style.getPropertyValue("--theme-territory-mask"),
@@ -112,7 +112,7 @@ test("terminal battle starts at the submitted word and reduced motion switches i
   ).toBeLessThanOrEqual(bounds!.y + bounds!.height);
   await page.waitForTimeout(5000);
   await page.screenshot({
-    path: `.impeccable/review/territory-light-${test.info().project.name}.png`,
+    path: `.impeccable/review/fluid-light-${test.info().project.name}.png`,
   });
   await expect(canvas).toHaveAttribute("data-battle", "false", {
     timeout: 16000,
@@ -173,27 +173,38 @@ test("a victorious defender retains the original theme and restores controls", a
   await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
-test("typing interrupts a battle without swallowing the command", async ({
+test("interaction and repeated theme commands leave the current battle running", async ({
   page,
 }) => {
+  test.setTimeout(25000);
   await page.goto("/");
   await expect(page.locator('[data-ready="true"]')).toBeAttached();
   const input = page.getByRole("textbox", { name: "Terminal input" });
   await input.pressSequentially("theme");
   await input.press("Enter");
-  await expect(page.locator("canvas[data-battle]")).toHaveAttribute(
-    "data-battle",
-    "true",
-  );
+  const canvas = page.locator("canvas[data-battle]");
+  await expect(canvas).toHaveAttribute("data-battle", "true");
+  const origin = await canvas.getAttribute("data-origin-y");
+  await page.getByRole("heading", { name: "Aaron Cassar" }).click();
   await input.pressSequentially("about");
   await input.press("Enter");
-  await expect(page.locator("canvas[data-battle]")).toHaveAttribute(
-    "data-battle",
-    "false",
-  );
-  await expect(page.locator(".xterm-rows")).toContainText(
+  await expect(page.locator("#root .xterm-rows")).toContainText(
     "System design. Product design.",
   );
-  await expect(page.locator('[data-theme="light"]')).toBeVisible();
+  await expect(page.locator("[data-territory-copy] .xterm-rows")).toContainText(
+    "System design. Product design.",
+  );
+  await input.pressSequentially("theme");
+  await input.press("Enter");
+  await expect(canvas).toHaveAttribute("data-battle", "true");
+  await expect(canvas).toHaveAttribute("data-origin-y", origin!);
+  await expect(page.locator("[data-territory-copy]")).toHaveCount(1);
+  await page.screenshot({
+    path: `.impeccable/review/fluid-interaction-${test.info().project.name}.png`,
+  });
+  await expect(canvas).toHaveAttribute("data-battle", "false", {
+    timeout: 16000,
+  });
+  await expect(page.locator("[data-territory-copy]")).toHaveCount(0);
   await expect(page.getByRole("alert")).toHaveCount(0);
 });

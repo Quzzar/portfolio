@@ -95,10 +95,11 @@ export const drawnUnderline = style({
       transformOrigin: "right",
       transition: `transform ${interaction}`,
     },
-    "&:is(:hover, :focus-visible)::after": {
-      transform: "scaleX(1)",
-      transformOrigin: "left",
-    },
+    "&:is(:hover, :focus-visible, [data-territory-hover], [data-territory-focus])::after":
+      {
+        transform: "scaleX(1)",
+        transformOrigin: "left",
+      },
   },
   "@media": {
     "(prefers-reduced-motion: reduce)": {
@@ -165,16 +166,22 @@ export const socialLink = style([
     gap: "0.35rem",
     minHeight: "2.75rem",
     transition: `color ${interaction}`,
-    selectors: { "&:is(:hover, :focus-visible)": { color: color.ink } },
+    selectors: {
+      "&:is(:hover, :focus-visible, [data-territory-hover], [data-territory-focus])":
+        { color: color.ink },
+    },
   },
 ]);
 globalStyle(`${socialLink} svg`, {
   transition: `transform ${interaction}`,
 });
-globalStyle(`${socialLink}:is(:hover, :focus-visible) svg`, {
-  transform: "translate(0.12em, -0.12em)",
-  "@media": { "(prefers-reduced-motion: reduce)": { transform: "none" } },
-});
+globalStyle(
+  `${socialLink}:is(:hover, :focus-visible, [data-territory-hover], [data-territory-focus]) svg`,
+  {
+    transform: "translate(0.12em, -0.12em)",
+    "@media": { "(prefers-reduced-motion: reduce)": { transform: "none" } },
+  },
+);
 export const themeButton = style([
   textButton,
   {
@@ -273,12 +280,37 @@ globalStyle(`${terminalLink}::after`, {
   "@media": { "(prefers-reduced-motion: reduce)": { animation: "none" } },
 });
 
-export const territoryCanvas = style({
+export const territoryCanvas = style({ display: "none" });
+export const territorySurface = style({
   position: "fixed",
-  inset: 0,
-  width: "100vw",
-  height: "100dvh",
   pointerEvents: "none",
   zIndex: 10,
-  viewTransitionName: "territory-units",
+  overflow: "hidden",
+  maskSize: "100% 100%",
+  maskRepeat: "no-repeat",
+});
+globalStyle(
+  `${territorySurface} .xterm-viewport, ${territorySurface} .xterm-screen`,
+  { backgroundColor: `${color.paper} !important` },
+);
+globalStyle(`${territorySurface} .xterm-rows span`, {
+  color: `${color.ink} !important`,
+  backgroundColor: "transparent !important",
+});
+globalStyle(`${territorySurface} .xterm-rows .xterm-cursor`, {
+  color: `${color.paper} !important`,
+  backgroundColor: `${color.ink} !important`,
+});
+globalStyle(`${territorySurface} .xterm-scrollable-element`, {
+  backgroundColor: `${color.paper} !important`,
+});
+globalStyle(
+  `${territorySurface} .xterm .xterm-rows .xterm-cursor.xterm-cursor-block:not(.xterm-cursor-blink)`,
+  {
+    color: `${color.paper} !important`,
+    backgroundColor: `${color.ink} !important`,
+  },
+);
+globalStyle(`${territorySurface} .xterm-rows .xterm-cursor-outline`, {
+  outlineColor: `${color.ink} !important`,
 });
