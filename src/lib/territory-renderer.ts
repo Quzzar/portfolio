@@ -9,16 +9,18 @@ export function createTerritoryBattle(
   const width = window.innerWidth;
   const height = window.innerHeight;
   const seed = crypto.getRandomValues(new Uint32Array(1))[0] ?? 1;
-  const forecast = new Territory(width, height, origin, battleRandom(seed));
-  while (forecast.winner === null) forecast.step(BATTLE.tick);
-  const pace = forecast.time / BATTLE.playbackSeconds;
   const simulation = new Territory(width, height, origin, battleRandom(seed));
   const mask = canvas;
-  mask.width = Math.ceil(width / 3);
-  mask.height = Math.ceil(height / 3);
+  const resolution = Math.min(
+    window.devicePixelRatio,
+    2,
+    Math.max(1, Math.sqrt(1_500_000 / (width * height))),
+  );
+  mask.width = Math.ceil(width * resolution);
+  mask.height = Math.ceil(height * resolution);
   const context = mask.getContext("2d");
   if (!context) throw new Error("Territory canvas unavailable");
-  const pixels = context.createImageData(mask.width, mask.height);
+
   const field = Float32Array.from(simulation.owners);
   const horizontal = new Float32Array(field.length);
   const smooth = new Float32Array(field.length);
@@ -72,31 +74,65 @@ export function createTerritoryBattle(
               0) * (weights[k + 2] ?? 0);
         smooth[y * columns + x] = value / 16;
       }
-    const waveY = Float32Array.from(
-      { length: mask.width },
-      (_, x) =>
-        Math.sin(((x / mask.width) * columns) / 5 - elapsed * 2.1) * 0.55,
-    );
-    for (let y = 0; y < mask.height; y++) {
-      const gridY = (y / mask.height) * rows - 0.5;
-      const waveX =
-        Math.sin(gridY / 4 + elapsed * 2.4) * 0.65 +
-        Math.sin(gridY / 2.2 - elapsed * 1.3) * 0.18;
-      for (let x = 0; x < mask.width; x++) {
-        const density = sample(
-          (x / mask.width) * columns - 0.5 + waveX,
-          gridY + (waveY[x] ?? 0),
-        );
-        const edge = Math.max(0, Math.min(1, (density - 0.47) / 0.06));
-        pixels.data[(y * mask.width + x) * 4 + 3] = Math.round(
-          edge * edge * (3 - 2 * edge) * 255,
+    // Trace the density contour as geometry. Native canvas antialiasing covers only the edge pixel.
+    const path = new Path2D();
+    const nx = columns * 2,
+      ny = rows * 2;
+    const densities = new Float32Array((nx + 1) * (ny + 1));
+    for (let y = 0; y <= ny; y++)
+      for (let x = 0; x <= nx; x++) {
+        const gx = x / 2 - 0.5,
+          gy = y / 2 - 0.5;
+        densities[y * (nx + 1) + x] = sample(
+          gx + Math.sin(gy / 4 + elapsed * 2.4) * 0.35,
+          gy + Math.sin(gx / 5 - elapsed * 2.1) * 0.3,
         );
       }
-    }
-    context.putImageData(pixels, 0, 0);
+    type Vertex = { x: number; y: number; value: number };
+    const triangle = (vertices: Vertex[]): void => {
+      const clipped: Vertex[] = [];
+      for (let i = 0; i < vertices.length; i++) {
+        const start = vertices[i]!,
+          end = vertices[(i + 1) % vertices.length]!;
+        if (start.value >= 0.5) clipped.push(start);
+        if (start.value >= 0.5 !== end.value >= 0.5) {
+          const t = (0.5 - start.value) / (end.value - start.value);
+          clipped.push({
+            x: start.x + (end.x - start.x) * t,
+            y: start.y + (end.y - start.y) * t,
+            value: 0.5,
+          });
+        }
+      }
+      if (!clipped.length) return;
+      path.moveTo(clipped[0]!.x, clipped[0]!.y);
+      for (const vertex of clipped.slice(1)) path.lineTo(vertex.x, vertex.y);
+      path.closePath();
+    };
+    for (let y = 0; y < ny; y++)
+      for (let x = 0; x < nx; x++) {
+        const vertex = (dx: number, dy: number): Vertex => ({
+          x: ((x + dx) * mask.width) / nx,
+          y: ((y + dy) * mask.height) / ny,
+          value: densities[(y + dy) * (nx + 1) + x + dx] ?? 0,
+        });
+        const a = vertex(0, 0),
+          b = vertex(1, 0),
+          c = vertex(1, 1),
+          d = vertex(0, 1);
+        if ([a, b, c, d].every((v) => v.value >= 0.5))
+          path.rect(a.x, a.y, b.x - a.x, d.y - a.y);
+        else if ([a, b, c, d].some((v) => v.value >= 0.5)) {
+          triangle([a, b, c]);
+          triangle([a, c, d]);
+        }
+      }
+    context.clearRect(0, 0, mask.width, mask.height);
+    context.fill(path);
     canvas.dataset["claimed"] = String(simulation.claimed);
     canvas.dataset["factories"] = String(simulation.factories.length);
     canvas.dataset["reversals"] = String(simulation.reversals);
+    canvas.dataset["raids"] = String(simulation.raids);
     return `url("${mask.toDataURL()}")`;
   };
   return {
@@ -119,7 +155,7 @@ export function createTerritoryBattle(
           const dt = Math.min((now - last) / 1000, 0.1);
           last = now;
           elapsed += dt;
-          accumulator += simulation.winner === null ? dt * pace : dt;
+          accumulator += simulation.winner === null ? dt * BATTLE.speed : dt;
           let changed = false;
           while (accumulator >= BATTLE.tick) {
             if (simulation.winner === null) simulation.step(BATTLE.tick);

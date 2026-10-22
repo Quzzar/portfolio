@@ -205,7 +205,7 @@
       },
       {
         "name": "theme-territory",
-        "value": "11.5s battle + 1.2s surrender",
+        "value": "Resource-driven battle + 1.2s surrender",
         "purpose": "Resource-driven battle seeded at the theme trigger, shown only as a curved fluid boundary with advancing and retreating waves. Page remains interactive. Additional theme requests are ignored until completion. Incoming theme can lose. Reduced motion switches immediately."
       }
     ],

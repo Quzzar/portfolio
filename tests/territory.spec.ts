@@ -11,6 +11,9 @@ function random(seed: number) {
 test("resource battles can win or lose, reclaim territory, and settle completely", () => {
   const outcomes = new Set<number>();
   let reversals = 0;
+  let raids = 0;
+  let retreats = 0;
+  const durations = new Set<number>();
   for (let seed = 1; seed <= 80; seed++) {
     const model = new Territory(
       390,
@@ -19,24 +22,38 @@ test("resource battles can win or lose, reclaim territory, and settle completely
       random(seed * 7919),
     );
     expect(model.owners[model.seed]).toBe(1);
-    while (model.winner === null) model.step(BATTLE.tick);
+    let peak = model.claimed;
+    let retreat = 0;
+    while (model.winner === null && model.time < 120) {
+      model.step(BATTLE.tick);
+      peak = Math.max(peak, model.claimed);
+      retreat = Math.max(retreat, peak - model.claimed);
+    }
+    raids += model.raids;
+    if (retreat > model.owners.length * 0.03) retreats++;
+    durations.add(Math.round(model.time));
+    expect(model.winner).not.toBeNull();
+    if (model.winner === null) throw new Error("Battle did not resolve");
     outcomes.add(model.winner);
     reversals += model.reversals;
     expect(model.reserves.every((n) => n >= 0 && Number.isFinite(n))).toBe(
       true,
     );
-    expect(model.time).toBeLessThan(12.1);
+    expect(model.time).toBeLessThan(120);
     for (let i = 0; i < model.columns + model.rows; i++) model.settle();
     expect([...model.owners].every((side) => side === model.winner)).toBe(true);
   }
   expect(outcomes).toEqual(new Set([0, 1]));
   expect(reversals).toBeGreaterThan(0);
+  expect(raids).toBeGreaterThan(20);
+  expect(retreats).toBeGreaterThan(5);
+  expect(durations.size).toBeGreaterThan(4);
 });
 
 test("button battle starts at the icon, renders fluid territory, and finishes without losing the terminal", async ({
   page,
 }) => {
-  test.setTimeout(25000);
+  test.setTimeout(65000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
@@ -64,10 +81,10 @@ test("button battle starts at the icon, renders fluid territory, and finishes wi
     path: `.impeccable/review/fluid-dark-${test.info().project.name}.png`,
   });
   await expect(canvas).toHaveAttribute("data-battle", "false", {
-    timeout: 16000,
+    timeout: 60000,
   });
-  expect(Date.now() - started).toBeGreaterThanOrEqual(10000);
-  expect(Date.now() - started).toBeLessThan(16000);
+  expect(Date.now() - started).toBeGreaterThan(0);
+  expect(Date.now() - started).toBeLessThan(60000);
   await expect(page.locator("#root [data-battling]")).toBeEnabled();
   expect(
     await page.evaluate(() =>
@@ -86,7 +103,7 @@ test("button battle starts at the icon, renders fluid territory, and finishes wi
 test("terminal battle starts at the submitted word and reduced motion switches immediately", async ({
   page,
 }) => {
-  test.setTimeout(25000);
+  test.setTimeout(65000);
   await page.goto("/");
   await expect(page.locator('[data-ready="true"]')).toBeAttached();
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -115,7 +132,7 @@ test("terminal battle starts at the submitted word and reduced motion switches i
     path: `.impeccable/review/fluid-light-${test.info().project.name}.png`,
   });
   await expect(canvas).toHaveAttribute("data-battle", "false", {
-    timeout: 16000,
+    timeout: 60000,
   });
   await expect(page.getByRole("alert")).toHaveCount(0);
 });
@@ -150,21 +167,24 @@ test("a wrapped mixed-case theme command starts a battle without stopping the sh
 test("a victorious defender retains the original theme and restores controls", async ({
   page,
 }) => {
-  test.setTimeout(25000);
-  await page.addInitScript(() => {
-    Object.defineProperty(crypto, "getRandomValues", {
-      value: (array: Uint32Array) => {
-        array[0] = 1946;
-        return array;
-      },
-    });
-  });
+  test.setTimeout(65000);
+  await page.addInitScript(
+    (seed: number) => {
+      Object.defineProperty(crypto, "getRandomValues", {
+        value: (array: Uint32Array) => {
+          array[0] = seed;
+          return array;
+        },
+      });
+    },
+    test.info().project.name === "mobile" ? 12131908 : 79190,
+  );
   await page.goto("/");
   await page.getByRole("button", { name: "Use dark theme" }).click();
   const canvas = page.locator("canvas[data-battle]");
   await expect(canvas).toHaveAttribute("data-battle", "true");
   await expect(canvas).toHaveAttribute("data-battle", "false", {
-    timeout: 16000,
+    timeout: 60000,
   });
   await expect(page.locator('[data-theme="light"]')).toBeVisible();
   await expect(
@@ -176,7 +196,7 @@ test("a victorious defender retains the original theme and restores controls", a
 test("interaction and repeated theme commands leave the current battle running", async ({
   page,
 }) => {
-  test.setTimeout(25000);
+  test.setTimeout(65000);
   await page.goto("/");
   await expect(page.locator('[data-ready="true"]')).toBeAttached();
   const input = page.getByRole("textbox", { name: "Terminal input" });
@@ -203,7 +223,7 @@ test("interaction and repeated theme commands leave the current battle running",
     path: `.impeccable/review/fluid-interaction-${test.info().project.name}.png`,
   });
   await expect(canvas).toHaveAttribute("data-battle", "false", {
-    timeout: 16000,
+    timeout: 60000,
   });
   await expect(page.locator("[data-territory-copy]")).toHaveCount(0);
   await expect(page.getByRole("alert")).toHaveCount(0);
