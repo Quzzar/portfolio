@@ -5,10 +5,9 @@ export type Factory = { cell: number; side: Side; progress: number };
 export type Troop = { from: number; to: number; side: Side; progress: number };
 export const BATTLE = {
   cell: 18,
-  seconds: 12,
   settleSeconds: 1.2,
   tick: 1 / 30,
-  playbackSeconds: 11.5,
+  speed: 0.65,
 };
 
 export class Territory {
@@ -20,6 +19,11 @@ export class Territory {
   readonly troops: Troop[] = [];
   readonly reserves: [number, number];
   readonly industry: [number, number];
+  readonly supplies: [number, number];
+  readonly campaigns: [number, number];
+  readonly objectives: [number, number];
+  raids = 0;
+  private readonly mobilization: number;
   readonly seed: number;
   time = 0;
   claimed = 0;
@@ -34,8 +38,9 @@ export class Territory {
     origin: Point,
     private readonly random = Math.random,
   ) {
-    this.columns = Math.max(8, Math.ceil(width / BATTLE.cell));
-    this.rows = Math.max(8, Math.ceil(height / BATTLE.cell));
+    const cellSize = Math.max(BATTLE.cell, Math.sqrt((width * height) / 1400));
+    this.columns = Math.max(8, Math.ceil(width / cellSize));
+    this.rows = Math.max(8, Math.ceil(height / cellSize));
     const count = this.columns * this.rows;
     this.owners = new Uint8Array(count);
     this.captured = new Uint8Array(count);
@@ -60,10 +65,15 @@ export class Territory {
     this.seed = y * this.columns + x;
     // Most defenders are underprepared, but a rare well-stocked defense can defeat the invasion.
     const readiness = this.random() ** 9;
-    this.reserves = [count * (0.16 + readiness * 2.8), count * 2.7];
-    this.industry = [0.45 + readiness * 2.2, 1.5];
-    for (let dy = -1; dy <= 1; dy++)
-      for (let dx = -1; dx <= 1; dx++) {
+    this.reserves = [count * 1.1, count * 5];
+    this.supplies = [count * (5 + readiness * 9), count * 7];
+    this.campaigns = [0, count * 1.6];
+    this.objectives = [this.seed, this.seed];
+    this.mobilization = 0.8 + this.random() * 1.4;
+    this.industry = [1.8 + readiness * 1.4, 1.5];
+    const radius = Math.max(2, Math.round(Math.sqrt(count * 0.003)));
+    for (let dy = -radius; dy <= radius; dy++)
+      for (let dx = -radius; dx <= radius; dx++) {
         if (
           x + dx >= 0 &&
           x + dx < this.columns &&
@@ -112,24 +122,29 @@ export class Territory {
     for (const troop of this.troops) {
       troop.progress += dt * 2;
       if (troop.progress >= 1 && this.owners[troop.to] === troop.side) {
-        this.reserves[troop.side] += this.owners.length * 0.007;
+        this.reserves[troop.side] += this.owners.length * 0.045;
       }
     }
     for (let i = this.troops.length - 1; i >= 0; i--)
       if ((this.troops[i]?.progress ?? 1) >= 1) this.troops.splice(i, 1);
     for (const factory of this.factories) {
       factory.progress += dt * this.industry[factory.side];
-      if (factory.progress >= 1) {
+      if (
+        factory.progress >= 1 &&
+        this.supplies[factory.side] >= this.owners.length * 0.045
+      ) {
         factory.progress -= 1;
         const border = [...this.fronts[factory.side]];
         const to = border[Math.floor(this.random() * border.length)];
-        if (to !== undefined)
+        if (to !== undefined) {
+          this.supplies[factory.side] -= this.owners.length * 0.045;
           this.troops.push({
             from: factory.cell,
             to,
             side: factory.side,
             progress: 0,
           });
+        }
       }
     }
     // Build out from captured land; new production consumes the army's reserves.
@@ -159,12 +174,63 @@ export class Territory {
           this.reserves[side] -= 35;
         }
       }
-      const attempts = Math.ceil(
-        this.owners.length * dt * (side === 1 ? 0.65 : 0.32),
-      );
       const border = [...this.fronts[side]];
+      // Save reinforcements for a concentrated offensive instead of spending every unit on arrival.
+      if (
+        this.campaigns[side] <= 0 &&
+        (side === 1 || this.time >= this.mobilization) &&
+        this.reserves[side] > this.owners.length * 0.35
+      ) {
+        this.campaigns[side] = this.reserves[side] * 0.85;
+        this.objectives[side] =
+          border[Math.floor(this.random() * border.length)] ?? this.seed;
+        // A funded landing opens a disconnected front behind enemy lines.
+        if (this.random() < 0.8) {
+          const cell = Math.floor(this.random() * this.owners.length);
+          if (this.owners[cell] !== side) {
+            const cost = this.owners.length * 0.12;
+            this.reserves[side] -= cost;
+            this.objectives[side] = cell;
+            this.raids++;
+            const cx = cell % this.columns,
+              cy = Math.floor(cell / this.columns);
+            for (
+              let y = Math.max(0, cy - 2);
+              y <= Math.min(this.rows - 1, cy + 2);
+              y++
+            )
+              for (
+                let x = Math.max(0, cx - 2);
+                x <= Math.min(this.columns - 1, cx + 2);
+                x++
+              )
+                this.claim(y * this.columns + x, side);
+          }
+        }
+      }
+      const mobilized = this.campaigns[side] > 0;
+      const attempts = Math.ceil(
+        this.owners.length * dt * (mobilized ? 0.12 : 0.008),
+      );
       for (let i = 0; i < attempts && this.reserves[side] >= 2; i++) {
-        const from = border[Math.floor(this.random() * border.length)];
+        let from = border[Math.floor(this.random() * border.length)];
+        if (mobilized) {
+          const objective = this.objectives[side];
+          const distance = (cell: number) =>
+            Math.abs((cell % this.columns) - (objective % this.columns)) +
+            Math.abs(
+              Math.floor(cell / this.columns) -
+                Math.floor(objective / this.columns),
+            );
+          for (let candidate = 0; candidate < 5; candidate++) {
+            const cell = border[Math.floor(this.random() * border.length)];
+            if (
+              cell !== undefined &&
+              (from === undefined || distance(cell) < distance(from))
+            )
+              from = cell;
+          }
+        }
         if (from === undefined || this.owners[from] !== side) continue;
         const targets =
           this.neighbors[from]?.filter((n) => this.owners[n] !== side) ?? [];
@@ -177,6 +243,7 @@ export class Territory {
           0.2 + this.random() * this.industry[opponent] * 1.8,
         );
         this.reserves[side] -= commitment;
+        this.campaigns[side] = Math.max(0, this.campaigns[side] - commitment);
         this.reserves[opponent] -= defense;
         if (this.random() < commitment / (commitment + defense))
           this.claim(target, side);
@@ -184,12 +251,21 @@ export class Territory {
     }
     if (this.claimed === 0) this.winner = 0;
     else if (this.claimed === this.owners.length) this.winner = 1;
-    else if (this.time >= BATTLE.seconds) {
-      // At the ceasefire, territory plus remaining troops determine who can sustain control.
-      const attack = this.claimed + this.reserves[1] * 0.2;
-      const defense =
-        this.owners.length - this.claimed + this.reserves[0] * 0.2;
-      this.winner = attack > defense ? 1 : 0;
+    else {
+      // Supply is finite. Exhausted armies surrender when they can no longer fund an attack.
+      const strength = ([0, 1] as const).map(
+        (side) =>
+          this.reserves[side] +
+          (this.factories.some((factory) => factory.side === side) &&
+          this.supplies[side] >= this.owners.length * 0.045
+            ? this.supplies[side]
+            : 0) +
+          this.troops.filter((troop) => troop.side === side).length *
+            this.owners.length *
+            0.045,
+      );
+      if ((strength[0] ?? 0) < 2) this.winner = 1;
+      else if ((strength[1] ?? 0) < 2) this.winner = 0;
     }
   }
 
