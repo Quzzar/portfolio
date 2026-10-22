@@ -5,7 +5,7 @@ export type Factory = { cell: number; side: Side; progress: number };
 export type Troop = { from: number; to: number; side: Side; progress: number };
 export const BATTLE = {
   cell: 18,
-  settleSeconds: 1.2,
+  finishSeconds: 0.4,
   tick: 1 / 30,
   speed: 0.65,
 };
@@ -23,6 +23,10 @@ export class Territory {
   readonly campaigns: [number, number];
   readonly objectives: [number, number];
   raids = 0;
+  rallies = 0;
+  readonly emergency: [number, number];
+  private readonly highWater: [number, number];
+  private routed: Side | null = null;
   private readonly mobilization: number;
   readonly seed: number;
   time = 0;
@@ -65,9 +69,11 @@ export class Territory {
     this.seed = y * this.columns + x;
     // Most defenders are underprepared, but a rare well-stocked defense can defeat the invasion.
     const readiness = this.random() ** 9;
-    this.reserves = [count * 1.1, count * 5];
+    this.reserves = [count * (1.1 + readiness * 5), count * 3.2];
     this.supplies = [count * (5 + readiness * 9), count * 7];
-    this.campaigns = [0, count * 1.6];
+    this.campaigns = [0, count * 0.9];
+    this.emergency = [count * 3, count * 3];
+    this.highWater = [count, 0];
     this.objectives = [this.seed, this.seed];
     this.mobilization = 0.8 + this.random() * 1.4;
     this.industry = [1.8 + readiness * 1.4, 1.5];
@@ -119,6 +125,22 @@ export class Territory {
   step(dt: number): void {
     if (this.winner !== null) return;
     this.time += dt;
+    if (this.routed !== null) {
+      // Occupation keeps moving at the normal front speed, even after an army exhausts its supplies.
+      const victor = this.routed === 0 ? 1 : 0;
+      for (let i = 0; i < Math.ceil(this.owners.length * dt * 0.18); i++) {
+        const border = [...this.fronts[victor]];
+        const from = border[Math.floor(this.random() * border.length)];
+        if (from === undefined) break;
+        const targets =
+          this.neighbors[from]?.filter((n) => this.owners[n] !== victor) ?? [];
+        const target = targets[Math.floor(this.random() * targets.length)];
+        if (target !== undefined) this.claim(target, victor);
+      }
+      if (this.claimed === 0) this.winner = 0;
+      else if (this.claimed === this.owners.length) this.winner = 1;
+      return;
+    }
     for (const troop of this.troops) {
       troop.progress += dt * 2;
       if (troop.progress >= 1 && this.owners[troop.to] === troop.side) {
@@ -151,6 +173,25 @@ export class Territory {
     for (const side of [0, 1] as const) {
       const owned =
         side === 1 ? this.claimed : this.owners.length - this.claimed;
+      this.highWater[side] = Math.max(this.highWater[side], owned);
+      const share = owned / this.owners.length;
+      // A retreat unlocks a finite reserve, so a comeback has force but cannot sustain an endless stalemate.
+      if (
+        share < 0.48 &&
+        this.highWater[side] - owned > this.owners.length * 0.15 &&
+        this.emergency[side] > 0
+      ) {
+        const reinforcement = Math.min(
+          this.emergency[side],
+          this.owners.length * 1.5,
+        );
+        this.emergency[side] -= reinforcement;
+        this.reserves[side] += reinforcement;
+        this.campaigns[side] += reinforcement;
+        this.highWater[side] = owned;
+        this.rallies++;
+      }
+      const underdog = 1 + Math.max(0, 0.5 - share) * 5;
       const count = this.factories.filter((f) => f.side === side).length;
       if (
         count < Math.min(12, 1 + Math.floor(owned / 180)) &&
@@ -210,7 +251,7 @@ export class Territory {
       }
       const mobilized = this.campaigns[side] > 0;
       const attempts = Math.ceil(
-        this.owners.length * dt * (mobilized ? 0.12 : 0.008),
+        this.owners.length * dt * (mobilized ? 0.22 : 0.018) * underdog,
       );
       for (let i = 0; i < attempts && this.reserves[side] >= 2; i++) {
         let from = border[Math.floor(this.random() * border.length)];
@@ -222,7 +263,7 @@ export class Territory {
               Math.floor(cell / this.columns) -
                 Math.floor(objective / this.columns),
             );
-          for (let candidate = 0; candidate < 5; candidate++) {
+          for (let candidate = 0; candidate < 2; candidate++) {
             const cell = border[Math.floor(this.random() * border.length)];
             if (
               cell !== undefined &&
@@ -242,7 +283,7 @@ export class Territory {
           this.reserves[opponent],
           0.2 + this.random() * this.industry[opponent] * 1.8,
         );
-        this.reserves[side] -= commitment;
+        this.reserves[side] -= commitment / underdog;
         this.campaigns[side] = Math.max(0, this.campaigns[side] - commitment);
         this.reserves[opponent] -= defense;
         if (this.random() < commitment / (commitment + defense))
@@ -252,7 +293,7 @@ export class Territory {
     if (this.claimed === 0) this.winner = 0;
     else if (this.claimed === this.owners.length) this.winner = 1;
     else {
-      // Supply is finite. Exhausted armies surrender when they can no longer fund an attack.
+      // Exhaustion ends resistance, but occupation must still cross the remaining territory.
       const strength = ([0, 1] as const).map(
         (side) =>
           this.reserves[side] +
@@ -264,25 +305,20 @@ export class Territory {
             this.owners.length *
             0.045,
       );
-      if ((strength[0] ?? 0) < 2) this.winner = 1;
-      else if ((strength[1] ?? 0) < 2) this.winner = 0;
-    }
-  }
-
-  /** After the result, remaining enclaves surrender along the existing front. */
-  settle(): void {
-    if (this.winner === null) return;
-    const side = this.winner;
-    const targets = new Set<number>();
-    for (const cell of this.fronts[side])
-      for (const neighbor of this.neighbors[cell] ?? []) {
-        if (this.owners[neighbor] !== side) targets.add(neighbor);
+      for (const side of [0, 1] as const) {
+        if ((strength[side] ?? 0) >= 2) continue;
+        if (this.emergency[side] > 0) {
+          this.reserves[side] += this.emergency[side];
+          this.campaigns[side] += this.emergency[side];
+          this.emergency[side] = 0;
+          this.rallies++;
+        } else this.routed = side;
       }
-    for (const target of targets) this.claim(target, side);
+    }
   }
 }
 
-/** Replaying a seed keeps the resource-driven result unchanged when pacing the animation. */
+/** Deterministic randomness makes battle outcomes reproducible in tests. */
 export function battleRandom(seed: number): () => number {
   return () => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;

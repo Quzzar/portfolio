@@ -8,7 +8,7 @@ function random(seed: number) {
   };
 }
 
-test("resource battles can win or lose, reclaim territory, and settle completely", () => {
+test("resource battles can win or lose, reclaim territory, and conquer fully without a surrender shortcut", () => {
   const outcomes = new Set<number>();
   let reversals = 0;
   let raids = 0;
@@ -30,7 +30,7 @@ test("resource battles can win or lose, reclaim territory, and settle completely
       retreat = Math.max(retreat, peak - model.claimed);
     }
     raids += model.raids;
-    if (retreat > model.owners.length * 0.03) retreats++;
+    if (retreat > model.owners.length * 0.15) retreats++;
     durations.add(Math.round(model.time));
     expect(model.winner).not.toBeNull();
     if (model.winner === null) throw new Error("Battle did not resolve");
@@ -40,13 +40,12 @@ test("resource battles can win or lose, reclaim territory, and settle completely
       true,
     );
     expect(model.time).toBeLessThan(120);
-    for (let i = 0; i < model.columns + model.rows; i++) model.settle();
     expect([...model.owners].every((side) => side === model.winner)).toBe(true);
   }
   expect(outcomes).toEqual(new Set([0, 1]));
   expect(reversals).toBeGreaterThan(0);
   expect(raids).toBeGreaterThan(20);
-  expect(retreats).toBeGreaterThan(5);
+  expect(retreats).toBeGreaterThan(50);
   expect(durations.size).toBeGreaterThan(4);
 });
 
@@ -168,17 +167,14 @@ test("a victorious defender retains the original theme and restores controls", a
   page,
 }) => {
   test.setTimeout(65000);
-  await page.addInitScript(
-    (seed: number) => {
-      Object.defineProperty(crypto, "getRandomValues", {
-        value: (array: Uint32Array) => {
-          array[0] = seed;
-          return array;
-        },
-      });
-    },
-    test.info().project.name === "mobile" ? 12131908 : 79190,
-  );
+  await page.addInitScript((seed: number) => {
+    Object.defineProperty(crypto, "getRandomValues", {
+      value: (array: Uint32Array) => {
+        array[0] = seed;
+        return array;
+      },
+    });
+  }, 87109);
   await page.goto("/");
   await page.getByRole("button", { name: "Use dark theme" }).click();
   const canvas = page.locator("canvas[data-battle]");

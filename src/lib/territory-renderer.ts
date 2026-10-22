@@ -161,18 +161,12 @@ export function createTerritoryBattle(
             if (simulation.winner === null) simulation.step(BATTLE.tick);
             else {
               settling += BATTLE.tick;
-              // Several layers per tick clear disconnected enclaves within the settling budget.
-              const layers = Math.ceil(
-                ((simulation.columns + simulation.rows) * BATTLE.tick) /
-                  BATTLE.settleSeconds,
-              );
-              for (let i = 0; i < layers; i++) simulation.settle();
             }
             accumulator -= BATTLE.tick;
             changed = true;
           }
           if (changed) onFrame(draw());
-          if (simulation.winner !== null && settling >= BATTLE.settleSeconds) {
+          if (simulation.winner !== null && settling >= BATTLE.finishSeconds) {
             finish(simulation.winner);
           } else frame = requestAnimationFrame(update);
         };
