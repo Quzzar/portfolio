@@ -132,7 +132,6 @@ export function createTerritoryBattle(
     canvas.dataset["claimed"] = String(simulation.claimed);
     canvas.dataset["factories"] = String(simulation.factories.length);
     canvas.dataset["reversals"] = String(simulation.reversals);
-    canvas.dataset["raids"] = String(simulation.raids);
     return `url("${mask.toDataURL()}")`;
   };
   return {

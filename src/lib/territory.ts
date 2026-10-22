@@ -22,7 +22,6 @@ export class Territory {
   readonly supplies: [number, number];
   readonly campaigns: [number, number];
   readonly objectives: [number, number];
-  raids = 0;
   rallies = 0;
   readonly emergency: [number, number];
   private readonly highWater: [number, number];
@@ -225,29 +224,6 @@ export class Territory {
         this.campaigns[side] = this.reserves[side] * 0.85;
         this.objectives[side] =
           border[Math.floor(this.random() * border.length)] ?? this.seed;
-        // A funded landing opens a disconnected front behind enemy lines.
-        if (this.random() < 0.8) {
-          const cell = Math.floor(this.random() * this.owners.length);
-          if (this.owners[cell] !== side) {
-            const cost = this.owners.length * 0.12;
-            this.reserves[side] -= cost;
-            this.objectives[side] = cell;
-            this.raids++;
-            const cx = cell % this.columns,
-              cy = Math.floor(cell / this.columns);
-            for (
-              let y = Math.max(0, cy - 2);
-              y <= Math.min(this.rows - 1, cy + 2);
-              y++
-            )
-              for (
-                let x = Math.max(0, cx - 2);
-                x <= Math.min(this.columns - 1, cx + 2);
-                x++
-              )
-                this.claim(y * this.columns + x, side);
-          }
-        }
       }
       const mobilized = this.campaigns[side] > 0;
       const attempts = Math.ceil(

@@ -11,7 +11,6 @@ function random(seed: number) {
 test("resource battles can win or lose, reclaim territory, and conquer fully without a surrender shortcut", () => {
   const outcomes = new Set<number>();
   let reversals = 0;
-  let raids = 0;
   let retreats = 0;
   const durations = new Set<number>();
   for (let seed = 1; seed <= 80; seed++) {
@@ -29,7 +28,6 @@ test("resource battles can win or lose, reclaim territory, and conquer fully wit
       peak = Math.max(peak, model.claimed);
       retreat = Math.max(retreat, peak - model.claimed);
     }
-    raids += model.raids;
     if (retreat > model.owners.length * 0.15) retreats++;
     durations.add(Math.round(model.time));
     expect(model.winner).not.toBeNull();
@@ -44,7 +42,6 @@ test("resource battles can win or lose, reclaim territory, and conquer fully wit
   }
   expect(outcomes).toEqual(new Set([0, 1]));
   expect(reversals).toBeGreaterThan(0);
-  expect(raids).toBeGreaterThan(20);
   expect(retreats).toBeGreaterThan(50);
   expect(durations.size).toBeGreaterThan(4);
 });
@@ -223,4 +220,39 @@ test("interaction and repeated theme commands leave the current battle running",
   });
   await expect(page.locator("[data-territory-copy]")).toHaveCount(0);
   await expect(page.getByRole("alert")).toHaveCount(0);
+});
+
+test("territory only expands from existing borders", () => {
+  for (let seed = 1; seed <= 12; seed++) {
+    const model = new Territory(
+      390,
+      664,
+      { x: 344, y: 626 },
+      random(seed * 7919),
+    );
+    while (model.winner === null && model.time < 120) {
+      const previous = model.owners.slice();
+      model.step(BATTLE.tick);
+      for (const side of [0, 1]) {
+        const gained = new Set<number>();
+        for (let cell = 0; cell < previous.length; cell++)
+          if (previous[cell] !== side && model.owners[cell] === side)
+            gained.add(cell);
+        const connected = [...gained].filter((cell) =>
+          model.neighbors[cell]?.some((n) => previous[n] === side),
+        );
+        for (const cell of connected) gained.delete(cell);
+        while (connected.length) {
+          const cell = connected.pop()!;
+          for (const neighbor of model.neighbors[cell] ?? [])
+            if (gained.delete(neighbor)) connected.push(neighbor);
+        }
+        if (gained.size)
+          throw new Error(
+            `Seed ${seed} spawned ${gained.size} remote cells at ${model.time}`,
+          );
+      }
+    }
+    expect(model.winner).not.toBeNull();
+  }
 });
