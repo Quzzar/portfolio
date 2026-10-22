@@ -225,6 +225,15 @@ export const Terminal = forwardRef<TerminalHandle, Props>(
             } else if (result.kind === "theme") {
               // Drain xterm's queued echo before locating the submitted word, including wrapped rows.
               await new Promise<void>((resolve) => term.write("", resolve));
+              // Parsing completion precedes the DOM renderer; wait for the submitted rows to paint.
+              await new Promise<void>((resolve) => {
+                const rendered = term.onRender(() => {
+                  rendered.dispose();
+                  resolve();
+                });
+                term.refresh(0, term.rows - 1);
+              });
+              if (disposed) return;
               const rows = element.querySelector(".xterm-rows");
               const start =
                 rows?.textContent?.toLowerCase().lastIndexOf("theme") ?? -1;
